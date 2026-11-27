@@ -18,7 +18,19 @@ A web page that splits players into evenly balanced soccer teams based on their 
 
 If more players are checked in than `teams × players per team`, the extras are spread across the teams as subs.
 
-The roster is saved in the browser (localStorage). "Share link" creates a URL with the roster encoded in it.
+## Privacy
+The roster is saved only in the browser on your device (localStorage). There is no share link, the page ignores roster data in URLs, and nothing is sent to any server. Other people opening the same URL see an empty roster.
+
+## Importing players from JSON
+**More ▾ → Import players from JSON file.** If a player's name is already on the list, that player is updated. New names are added. The result is saved on the device.
+
+```json
+[
+  { "name": "John", "pos": "FW", "skills": [4, 3, 5, 2, 4] },
+  { "name": "Mike", "pos": "DF", "Speed": 3, "Passing": 4, "Shooting": 3, "Defense": 5, "Stamina": 3 }
+]
+```
+`skills` follows the order Speed, Passing, Shooting, Defense, Stamina, each 1–5. `{ "players": [...] }` also works.
 
 ## Running
 - Locally: open `index.html` in a browser.

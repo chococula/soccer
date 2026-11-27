@@ -184,6 +184,9 @@
           <summary>More ▾</summary>
           <div class="menu">
             <button id="allOnBtn">Everyone is playing</button>
+            <button id="jsonBtn">Import players from JSON file</button>
+            <input type="file" id="jsonFile" accept=".json,application/json" hidden>
+            <p class="hint" style="margin:0">🔒 Players are saved only on this device. There's no share link, and nothing is sent anywhere.</p>
             <button id="sampleBtn">Add sample players</button>
             <hr>
             <label class="hint" for="bulkText">Paste many players, one per line:<br><code>Name, Speed, Passing, Shooting, Defense, Stamina, Position</code></label>
@@ -226,7 +229,6 @@
       <div class="toolbar">
         <button id="reshuffleBtn">🔀 Shuffle again</button>
         <button id="copyBtn">Copy</button>
-        <button id="shareBtn">Share link</button>
       </div>
     </div>
     <p class="balance" id="balance"></p>
@@ -276,12 +278,35 @@ function applyData(data) {
   if (+data.teamSize) settings.teamSize = Math.max(1, Math.min(30, +data.teamSize));
 }
 function load() {
-  // Shared data in the URL hash (#d=...) takes priority
-  const m = location.hash.match(/^#d=(.+)$/);
-  if (m) {
-    try { applyData(JSON.parse(decodeURIComponent(escape(atob(m[1]))))); return; } catch (e) {}
-  }
+  // The roster lives only in this device's storage. Data in links is never read,
+  // so nobody can push a roster onto this phone or pull one out of it via a URL.
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
   try { applyData(JSON.parse(localStorage.getItem(STORE_KEY))); } catch (e) {}
+  // Ask the browser not to evict this site's storage when space runs low
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+}
+
+/* ---------- JSON import ----------
+   Accepts [{...}, ...] or {players:[...]}. Each player:
+   {"name":"John","pos":"FW","skills":[4,3,5,2,4]}  or
+   {"name":"John","pos":"FW","Speed":4,"Passing":3,"Shooting":5,"Defense":2,"Stamina":4}
+   A player whose name already exists is updated; new names are added. */
+function importJSON(text) {
+  const data = JSON.parse(text);
+  const list = Array.isArray(data) ? data : data.players;
+  if (!Array.isArray(list)) throw new Error("No players array found");
+  let added = 0, updated = 0;
+  list.forEach(raw => {
+    const name = String(raw.name || "").trim();
+    if (!name) return;
+    const skills = SKILLS.map((s, i) => clamp(Array.isArray(raw.skills) ? raw.skills[i]
+      : raw.skills?.[s] ?? raw.skills?.[s.toLowerCase()] ?? raw[s] ?? raw[s.toLowerCase()]));
+    const pos = POSITIONS.includes(String(raw.pos || raw.position || "").toUpperCase()) ? String(raw.pos || raw.position || "").toUpperCase() : "";
+    const found = players.find(p => p.name.trim().toLowerCase() === name.toLowerCase());
+    if (found) { found.skills = skills; if (pos) found.pos = pos; updated++; }
+    else { players.push({ name, skills, pos, on: raw.on !== false }); added++; }
+  });
+  return { added, updated };
 }
 
 /* ---------- Player cards ---------- */
@@ -484,11 +509,16 @@ $("bulkAddBtn").onclick = () => {
 document.addEventListener("click", (e) => { if (!e.target.closest("#moreMenu")) closeMenu(); });
 $("makeBtn").onclick = run;
 $("reshuffleBtn").onclick = run;
-$("shareBtn").onclick = async () => {
-  const url = location.href.split("#")[0] + "#d=" + btoa(unescape(encodeURIComponent(JSON.stringify(snapshot()))));
-  history.replaceState(null, "", url);
-  try { await navigator.clipboard.writeText(url); alert("Share link copied. Anyone who opens it gets this roster."); }
-  catch (e) { prompt("Copy this link:", url); }
+$("jsonBtn").onclick = () => $("jsonFile").click();
+$("jsonFile").onchange = async (e) => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  try {
+    const { added, updated } = importJSON(await file.text());
+    renderPlayers(); save(); closeMenu();
+    alert(`Saved on this device: ${added} added, ${updated} updated.`);
+  } catch (err) { alert("Couldn't read that JSON file: " + err.message); }
 };
 $("copyBtn").onclick = async () => {
   if (!lastResult) return;
