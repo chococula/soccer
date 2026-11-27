@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>축구 팀 짜기</title>
+<title>Soccer Team Maker</title>
 <style>
   :root {
     --bg: #f5f7f5; --card: #ffffff; --text: #1b1f1c; --muted: #66706a;
@@ -17,7 +17,7 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
   h1 { font-size: 22px; margin: 0 0 4px; }
   h2 { font-size: 17px; margin: 0 0 12px; }
@@ -54,11 +54,11 @@
 </head>
 <body>
 <main>
-  <h1>⚽ 축구 팀 짜기</h1>
-  <p class="sub">선수 능력치(1~10)를 입력하고, 팀 수와 팀당 인원을 정하면 실력이 비슷하게 팀을 나눠 줍니다.</p>
+  <h1>⚽ Soccer Team Maker</h1>
+  <p class="sub">Rate each player's skills (1–10), choose the number of teams and players per team, and get evenly balanced teams.</p>
 
   <section class="card">
-    <h2>1. 선수 명단</h2>
+    <h2>1. Players</h2>
     <div class="table-wrap">
       <table>
         <thead><tr id="headRow"></tr></thead>
@@ -66,42 +66,42 @@
       </table>
     </div>
     <div class="row" style="margin-top:12px">
-      <button id="addBtn">+ 선수 추가</button>
-      <button id="sampleBtn">예시 데이터</button>
-      <button id="clearBtn" class="danger">전체 삭제</button>
+      <button id="addBtn">+ Add player</button>
+      <button id="sampleBtn">Sample data</button>
+      <button id="clearBtn" class="danger">Clear all</button>
     </div>
     <details style="margin-top:12px">
-      <summary>한 번에 붙여넣기 (이름, 스피드, 패스, 슈팅, 수비, 체력, 포지션)</summary>
-      <textarea id="bulkText" placeholder="홍길동, 7, 6, 8, 4, 7, FW&#10;김철수, 5, 7, 5, 8, 6, DF"></textarea>
+      <summary>Bulk paste (name, speed, passing, shooting, defense, stamina, position)</summary>
+      <textarea id="bulkText" placeholder="John, 7, 6, 8, 4, 7, FW&#10;Mike, 5, 7, 5, 8, 6, DF"></textarea>
       <div class="row" style="margin-top:8px">
-        <button id="bulkAddBtn">명단에 추가</button>
+        <button id="bulkAddBtn">Add to list</button>
       </div>
     </details>
   </section>
 
   <section class="card">
-    <h2>2. 팀 설정</h2>
+    <h2>2. Team settings</h2>
     <div class="row">
-      <label class="f">팀 수 <input type="number" id="teamCount" min="2" max="20" value="2"></label>
-      <label class="f">팀당 인원 <input type="number" id="teamSize" min="1" max="30" value="5"></label>
-      <button class="primary" id="makeBtn">팀 짜기</button>
-      <button id="shareBtn">링크로 공유</button>
+      <label class="f">Teams <input type="number" id="teamCount" min="2" max="20" value="2"></label>
+      <label class="f">Players per team <input type="number" id="teamSize" min="1" max="30" value="5"></label>
+      <button class="primary" id="makeBtn">Make teams</button>
+      <button id="shareBtn">Share link</button>
     </div>
     <div id="msg" class="msg"></div>
   </section>
 
   <section class="card" id="resultCard" hidden>
-    <h2>3. 결과</h2>
+    <h2>3. Teams</h2>
     <div class="teams" id="teams"></div>
     <div class="row" style="margin-top:12px">
-      <button id="reshuffleBtn">다른 조합으로 다시</button>
-      <button id="copyBtn">결과 복사</button>
+      <button id="reshuffleBtn">Try another combination</button>
+      <button id="copyBtn">Copy result</button>
     </div>
   </section>
 </main>
 
 <script>
-const SKILLS = ["스피드", "패스", "슈팅", "수비", "체력"];
+const SKILLS = ["Speed", "Passing", "Shooting", "Defense", "Stamina"];
 const POSITIONS = ["", "GK", "DF", "MF", "FW"];
 const STORE_KEY = "soccerTeamMgr.v1";
 
@@ -112,7 +112,7 @@ const $ = (id) => document.getElementById(id);
 const clamp = (v) => Math.max(1, Math.min(10, Math.round(Number(v) || 5)));
 const ovr = (p) => p.skills.reduce((a, b) => a + b, 0) / SKILLS.length;
 
-/* ---------- 저장 / 불러오기 ---------- */
+/* ---------- Save / load ---------- */
 function save() {
   const data = { players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
@@ -127,7 +127,7 @@ function applyData(data) {
   if (data.teamSize) $("teamSize").value = data.teamSize;
 }
 function load() {
-  // URL 해시(#d=...)에 공유 데이터가 있으면 우선 사용
+  // Shared data in the URL hash (#d=...) takes priority
   const m = location.hash.match(/^#d=(.+)$/);
   if (m) {
     try { applyData(JSON.parse(decodeURIComponent(escape(atob(m[1]))))); return; } catch (e) {}
@@ -135,11 +135,11 @@ function load() {
   try { applyData(JSON.parse(localStorage.getItem(STORE_KEY))); } catch (e) {}
 }
 
-/* ---------- 명단 테이블 ---------- */
+/* ---------- Player table ---------- */
 function renderHead() {
   $("headRow").innerHTML =
-    "<th>참가</th><th>이름</th>" + SKILLS.map(s => `<th>${s}</th>`).join("") +
-    "<th>포지션</th><th>평균</th><th></th>";
+    "<th>In</th><th>Name</th>" + SKILLS.map(s => `<th>${s}</th>`).join("") +
+    "<th>Position</th><th>Avg</th><th></th>";
 }
 function renderPlayers() {
   const body = $("playerBody");
@@ -148,11 +148,11 @@ function renderPlayers() {
     const tr = document.createElement("tr");
     tr.innerHTML =
       `<td><input type="checkbox" data-k="on" ${p.on ? "checked" : ""}></td>` +
-      `<td class="name"><input type="text" data-k="name" placeholder="이름"></td>` +
+      `<td class="name"><input type="text" data-k="name" placeholder="Name"></td>` +
       p.skills.map((v, i) => `<td><input type="number" min="1" max="10" data-k="s${i}" value="${v}"></td>`).join("") +
       `<td><select data-k="pos">${POSITIONS.map(x => `<option value="${x}" ${x === p.pos ? "selected" : ""}>${x || "-"}</option>`).join("")}</select></td>` +
       `<td class="ovr">${ovr(p).toFixed(1)}</td>` +
-      `<td><button class="danger" data-k="del" title="삭제">✕</button></td>`;
+      `<td><button class="danger" data-k="del" title="Remove">✕</button></td>`;
     tr.querySelector('[data-k="name"]').value = p.name;
     tr.addEventListener("input", (e) => {
       const k = e.target.dataset.k;
@@ -172,27 +172,27 @@ function addPlayer(name = "", skills = [5, 5, 5, 5, 5], pos = "") {
   players.push({ name, skills: skills.map(clamp), pos, on: true });
 }
 
-/* ---------- 메시지 ---------- */
+/* ---------- Messages ---------- */
 function setMsg(text, cls = "") { const m = $("msg"); m.textContent = text; m.className = "msg " + cls; }
 function updateCountMsg() {
   const n = players.filter(p => p.on && p.name.trim()).length;
   const t = +$("teamCount").value, s = +$("teamSize").value;
   const need = t * s;
-  if (!n) return setMsg("선수를 추가해 주세요.");
-  if (n === need) setMsg(`참가 ${n}명 · ${t}팀 × ${s}명 — 딱 맞습니다.`);
-  else if (n > need) setMsg(`참가 ${n}명 · 필요 ${need}명 — 남는 ${n - need}명은 교체 선수로 팀에 고르게 배치됩니다.`, "warn");
-  else setMsg(`참가 ${n}명 · 필요 ${need}명 — ${need - n}명이 부족합니다. 팀 수나 인원을 줄여 주세요.`, "err");
+  if (!n) return setMsg("Add some players to get started.");
+  if (n === need) setMsg(`${n} players · ${t} teams × ${s} — exact fit.`);
+  else if (n > need) setMsg(`${n} players · ${need} needed — the extra ${n - need} will be spread across teams as subs.`, "warn");
+  else setMsg(`${n} players · ${need} needed — ${need - n} short. Reduce the number of teams or players per team.`, "err");
 }
 
-/* ---------- 팀 나누기 알고리즘 ----------
-   1) 평균 능력치 순 스네이크 드래프트로 초기 배치 (무작위 섞기 포함)
-   2) 두 팀 간 선수 교환으로 비용(팀 총합 편차 + 능력치별 편차 + GK 쏠림)을 줄이는 국소 탐색
-   3) 여러 번 시도 후 가장 균형 잡힌 결과 선택 */
+/* ---------- Balancing algorithm ----------
+   1) Snake draft by average rating (with some randomness)
+   2) Local search: swap players between teams to reduce cost
+      (spread of team averages + per-skill averages + position clustering)
+   3) Run many attempts and keep the most balanced result */
 function cost(teams) {
-  const T = teams.length;
   const sum = (arr, f) => arr.reduce((a, p) => a + f(p), 0);
   const variance = (vals) => { const m = vals.reduce((a, b) => a + b, 0) / vals.length; return vals.reduce((a, v) => a + (v - m) ** 2, 0) / vals.length; };
-  // 팀 인원이 다를 수 있으니 평균(인당) 기준으로도 비교
+  // Team sizes may differ, so compare per-player averages
   let c = variance(teams.map(t => sum(t, ovr) / t.length)) * 10;
   for (let i = 0; i < SKILLS.length; i++) c += variance(teams.map(t => sum(t, p => p.skills[i]) / t.length)) * 2;
   for (const pos of ["GK", "DF", "MF", "FW"]) c += variance(teams.map(t => t.filter(p => p.pos === pos).length)) * (pos === "GK" ? 8 : 1.5);
@@ -203,7 +203,7 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 function makeTeams(list, T) {
   let best = null, bestCost = Infinity;
   for (let attempt = 0; attempt < 40; attempt++) {
-    // 약간의 노이즈를 섞어 매번 다른 조합이 나오도록
+    // Add a little noise so each run gives a different combination
     const sorted = shuffle([...list]).sort((a, b) => (ovr(b) + Math.random() * 0.8) - (ovr(a) + Math.random() * 0.8));
     const teams = Array.from({ length: T }, () => []);
     sorted.forEach((p, i) => {
@@ -229,10 +229,10 @@ function makeTeams(list, T) {
 function run() {
   const T = Math.floor(+$("teamCount").value), S = Math.floor(+$("teamSize").value);
   const list = players.filter(p => p.on && p.name.trim());
-  if (T < 2 || S < 1) return setMsg("팀 수는 2 이상, 팀당 인원은 1 이상이어야 합니다.", "err");
+  if (T < 2 || S < 1) return setMsg("You need at least 2 teams and at least 1 player per team.", "err");
   if (list.length < T * S) return updateCountMsg();
   const teams = makeTeams(list, T);
-  // 팀 내에서는 평균 높은 순 정렬, 정원 초과분은 '교체'로 표시
+  // Sort each team by rating; anyone beyond the team size is marked as a sub
   lastResult = teams.map(t => t.sort((a, b) => ovr(b) - ovr(a)));
   renderResult(S);
   save();
@@ -246,14 +246,14 @@ function renderResult(S) {
     const skillAvg = SKILLS.map((s, k) => `${s} ${(t.reduce((a, p) => a + p.skills[k], 0) / t.length).toFixed(1)}`).join(" · ");
     const div = document.createElement("div");
     div.className = "team";
-    div.innerHTML = `<h3><span>${i + 1}팀</span><span>평균 ${avg.toFixed(2)}</span></h3><ul></ul><div class="stats">${skillAvg}</div>`;
+    div.innerHTML = `<h3><span>Team ${i + 1}</span><span>Avg ${avg.toFixed(2)}</span></h3><ul></ul><div class="stats">${skillAvg}</div>`;
     const ul = div.querySelector("ul");
     t.forEach((p, idx) => {
       const li = document.createElement("li");
       const left = document.createElement("span");
       left.textContent = p.name;
       if (p.pos) left.insertAdjacentHTML("beforeend", `<span class="tag">${p.pos}</span>`);
-      if (idx >= S) left.insertAdjacentHTML("beforeend", `<span class="tag">교체</span>`);
+      if (idx >= S) left.insertAdjacentHTML("beforeend", `<span class="tag">Sub</span>`);
       li.appendChild(left);
       li.insertAdjacentHTML("beforeend", `<span>${ovr(p).toFixed(1)}</span>`);
       ul.appendChild(li);
@@ -264,11 +264,11 @@ function renderResult(S) {
   $("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/* ---------- 버튼 ---------- */
+/* ---------- Buttons ---------- */
 $("addBtn").onclick = () => { addPlayer(); renderPlayers(); save(); };
-$("clearBtn").onclick = () => { if (confirm("명단을 모두 지울까요?")) { players = []; renderPlayers(); save(); } };
+$("clearBtn").onclick = () => { if (confirm("Remove all players?")) { players = []; renderPlayers(); save(); } };
 $("sampleBtn").onclick = () => {
-  const names = ["민준","서준","도윤","예준","시우","하준","주원","지호","지후","준우"];
+  const names = ["Alex","Ben","Chris","Dan","Eli","Finn","Gabe","Henry","Ian","Jack"];
   const pos = ["GK","DF","DF","MF","MF","FW","GK","DF","MF","FW"];
   names.forEach((n, i) => addPlayer(n, SKILLS.map(() => 3 + Math.floor(Math.random() * 7)), pos[i]));
   renderPlayers(); save();
@@ -290,15 +290,15 @@ $("shareBtn").onclick = async () => {
   const data = { players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
   const url = location.href.split("#")[0] + "#d=" + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   history.replaceState(null, "", url);
-  try { await navigator.clipboard.writeText(url); setMsg("공유 링크를 클립보드에 복사했습니다."); }
-  catch (e) { prompt("이 링크를 복사하세요:", url); }
+  try { await navigator.clipboard.writeText(url); setMsg("Share link copied to clipboard."); }
+  catch (e) { prompt("Copy this link:", url); }
 };
 $("copyBtn").onclick = async () => {
   if (!lastResult) return;
   const S = +$("teamSize").value;
-  const text = lastResult.map((t, i) => `${i + 1}팀: ` + t.map((p, k) => p.name + (k >= S ? "(교체)" : "")).join(", ")).join("\n");
-  try { await navigator.clipboard.writeText(text); alert("결과를 복사했습니다.\n\n" + text); }
-  catch (e) { prompt("결과:", text); }
+  const text = lastResult.map((t, i) => `Team ${i + 1}: ` + t.map((p, k) => p.name + (k >= S ? " (sub)" : "")).join(", ")).join("\n");
+  try { await navigator.clipboard.writeText(text); alert("Result copied.\n\n" + text); }
+  catch (e) { prompt("Result:", text); }
 };
 
 renderHead();

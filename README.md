@@ -1,21 +1,23 @@
 # ⚽ soccerTeamMgr
 
-선수 능력치를 입력하면 실력이 비슷하게 팀을 나눠 주는 웹 페이지입니다. 서버 없이 `index.html` 하나로 동작합니다.
+A web page that splits players into evenly balanced soccer teams based on their skill ratings. Everything runs in a single `index.html` with no server.
 
-## 입력
-- **선수 능력치 5개** (1~10): 스피드, 패스, 슈팅, 수비, 체력
-- **포지션** (선택): GK / DF / MF / FW. GK 등이 한 팀에 몰리지 않게 나눕니다.
-- **팀 수**, **팀당 인원**
+**Live:** https://chococula.github.io/soccerTeamMgr/
 
-## 동작
-1. 평균 능력치 순으로 스네이크 드래프트 (1→2→2→1 …)
-2. 팀 간 선수 교환으로 팀 평균·능력치별 평균·포지션 분포의 편차를 줄임
-3. 40번 시도해서 가장 균형 잡힌 결과를 고름. "다른 조합으로 다시"를 누르면 비슷하게 균형 잡힌 다른 조합이 나옴
+## Input
+- **Five skills per player** (1–10): Speed, Passing, Shooting, Defense, Stamina
+- **Position** (optional): GK / DF / MF / FW. Positions are spread across teams, so the goalkeepers don't all end up on one team.
+- **Number of teams** and **players per team**
 
-참가 인원이 `팀 수 × 팀당 인원`보다 많으면 남는 선수는 교체 선수로 각 팀에 고르게 들어갑니다.
+## How it works
+1. Snake draft by average rating (1→2→2→1 …)
+2. Swap players between teams to minimize the spread of team averages, per-skill averages, and position counts
+3. Repeat 40 times and keep the most balanced result. "Try another combination" gives a different, similarly balanced split.
 
-명단은 브라우저(localStorage)에 저장되고, "링크로 공유"를 누르면 명단이 담긴 URL이 만들어집니다.
+If more players are checked in than `teams × players per team`, the extras are spread across the teams as subs.
 
-## 실행
-- 로컬: `index.html`을 브라우저로 열면 됩니다.
-- URL로 배포: GitHub 저장소 → Settings → Pages → Branch `main` / `(root)` 선택 → `https://<계정>.github.io/soccerTeamMgr/`
+The roster is saved in the browser (localStorage). "Share link" creates a URL with the roster encoded in it.
+
+## Running
+- Locally: open `index.html` in a browser.
+- Hosted: GitHub Pages serves the `main` branch root.
