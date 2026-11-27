@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>축구 팀 짜기</title>
+<style>
+  :root {
+    --bg: #f5f7f5; --card: #ffffff; --text: #1b1f1c; --muted: #66706a;
+    --line: #dde3df; --accent: #1f8a4c; --accent-text: #ffffff; --warn: #b54708; --err: #c0262d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121513; --card: #1c211e; --text: #e7ece9; --muted: #9aa59f;
+      --line: #2e3631; --accent: #3fb872; --accent-text: #0d1a12; --warn: #f0a050; --err: #ff6b70;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 17px; margin: 0 0 12px; }
+  p.sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+  label.f { display: flex; flex-direction: column; font-size: 13px; color: var(--muted); gap: 4px; }
+  input, select, textarea, button { font: inherit; color: inherit; }
+  input[type=text], input[type=number], select, textarea {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
+  input[type=number] { width: 64px; }
+  textarea { width: 100%; min-height: 90px; }
+  button { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button.danger { color: var(--err); }
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; }
+  th, td { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: center; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.name input { width: 120px; }
+  td.ovr { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .msg { margin-top: 10px; font-size: 14px; }
+  .msg.warn { color: var(--warn); } .msg.err { color: var(--err); }
+  .teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .team { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .team h3 { margin: 0 0 6px; font-size: 16px; display: flex; justify-content: space-between; }
+  .team ul { list-style: none; margin: 0; padding: 0; }
+  .team li { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .team li:last-child { border-bottom: 0; }
+  .tag { font-size: 11px; color: var(--muted); margin-left: 6px; }
+  .stats { font-size: 12px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  details summary { cursor: pointer; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>⚽ 축구 팀 짜기</h1>
+  <p class="sub">선수 능력치(1~10)를 입력하고, 팀 수와 팀당 인원을 정하면 실력이 비슷하게 팀을 나눠 줍니다.</p>
+
+  <section class="card">
+    <h2>1. 선수 명단</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="headRow"></tr></thead>
+        <tbody id="playerBody"></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="addBtn">+ 선수 추가</button>
+      <button id="sampleBtn">예시 데이터</button>
+      <button id="clearBtn" class="danger">전체 삭제</button>
+    </div>
+    <details style="margin-top:12px">
+      <summary>한 번에 붙여넣기 (이름, 스피드, 패스, 슈팅, 수비, 체력, 포지션)</summary>
+      <textarea id="bulkText" placeholder="홍길동, 7, 6, 8, 4, 7, FW&#10;김철수, 5, 7, 5, 8, 6, DF"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="bulkAddBtn">명단에 추가</button>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>2. 팀 설정</h2>
+    <div class="row">
+      <label class="f">팀 수 <input type="number" id="teamCount" min="2" max="20" value="2"></label>
+      <label class="f">팀당 인원 <input type="number" id="teamSize" min="1" max="30" value="5"></label>
+      <button class="primary" id="makeBtn">팀 짜기</button>
+      <button id="shareBtn">링크로 공유</button>
+    </div>
+    <div id="msg" class="msg"></div>
+  </section>
+
+  <section class="card" id="resultCard" hidden>
+    <h2>3. 결과</h2>
+    <div class="teams" id="teams"></div>
+    <div class="row" style="margin-top:12px">
+      <button id="reshuffleBtn">다른 조합으로 다시</button>
+      <button id="copyBtn">결과 복사</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const SKILLS = ["스피드", "패스", "슈팅", "수비", "체력"];
+const POSITIONS = ["", "GK", "DF", "MF", "FW"];
+const STORE_KEY = "soccerTeamMgr.v1";
+
+let players = [];   // {name, skills:[5], pos, on:true}
+let lastResult = null;
+
+const $ = (id) => document.getElementById(id);
+const clamp = (v) => Math.max(1, Math.min(10, Math.round(Number(v) || 5)));
+const ovr = (p) => p.skills.reduce((a, b) => a + b, 0) / SKILLS.length;
+
+/* ---------- 저장 / 불러오기 ---------- */
+function save() {
+  const data = { players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+function applyData(data) {
+  if (!data) return;
+  players = (data.players || []).map(p => ({
+    name: String(p.name || ""), skills: SKILLS.map((_, i) => clamp(p.skills?.[i])),
+    pos: POSITIONS.includes(p.pos) ? p.pos : "", on: p.on !== false,
+  }));
+  if (data.teamCount) $("teamCount").value = data.teamCount;
+  if (data.teamSize) $("teamSize").value = data.teamSize;
+}
+function load() {
+  // URL 해시(#d=...)에 공유 데이터가 있으면 우선 사용
+  const m = location.hash.match(/^#d=(.+)$/);
+  if (m) {
+    try { applyData(JSON.parse(decodeURIComponent(escape(atob(m[1]))))); return; } catch (e) {}
+  }
+  try { applyData(JSON.parse(localStorage.getItem(STORE_KEY))); } catch (e) {}
+}
+
+/* ---------- 명단 테이블 ---------- */
+function renderHead() {
+  $("headRow").innerHTML =
+    "<th>참가</th><th>이름</th>" + SKILLS.map(s => `<th>${s}</th>`).join("") +
+    "<th>포지션</th><th>평균</th><th></th>";
+}
+function renderPlayers() {
+  const body = $("playerBody");
+  body.innerHTML = "";
+  players.forEach((p, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      `<td><input type="checkbox" data-k="on" ${p.on ? "checked" : ""}></td>` +
+      `<td class="name"><input type="text" data-k="name" placeholder="이름"></td>` +
+      p.skills.map((v, i) => `<td><input type="number" min="1" max="10" data-k="s${i}" value="${v}"></td>`).join("") +
+      `<td><select data-k="pos">${POSITIONS.map(x => `<option value="${x}" ${x === p.pos ? "selected" : ""}>${x || "-"}</option>`).join("")}</select></td>` +
+      `<td class="ovr">${ovr(p).toFixed(1)}</td>` +
+      `<td><button class="danger" data-k="del" title="삭제">✕</button></td>`;
+    tr.querySelector('[data-k="name"]').value = p.name;
+    tr.addEventListener("input", (e) => {
+      const k = e.target.dataset.k;
+      if (k === "name") p.name = e.target.value;
+      else if (k === "on") p.on = e.target.checked;
+      else if (k === "pos") p.pos = e.target.value;
+      else if (k && k[0] === "s") p.skills[+k.slice(1)] = clamp(e.target.value);
+      tr.querySelector(".ovr").textContent = ovr(p).toFixed(1);
+      save(); updateCountMsg();
+    });
+    tr.querySelector('[data-k="del"]').onclick = () => { players.splice(idx, 1); renderPlayers(); save(); };
+    body.appendChild(tr);
+  });
+  updateCountMsg();
+}
+function addPlayer(name = "", skills = [5, 5, 5, 5, 5], pos = "") {
+  players.push({ name, skills: skills.map(clamp), pos, on: true });
+}
+
+/* ---------- 메시지 ---------- */
+function setMsg(text, cls = "") { const m = $("msg"); m.textContent = text; m.className = "msg " + cls; }
+function updateCountMsg() {
+  const n = players.filter(p => p.on && p.name.trim()).length;
+  const t = +$("teamCount").value, s = +$("teamSize").value;
+  const need = t * s;
+  if (!n) return setMsg("선수를 추가해 주세요.");
+  if (n === need) setMsg(`참가 ${n}명 · ${t}팀 × ${s}명 — 딱 맞습니다.`);
+  else if (n > need) setMsg(`참가 ${n}명 · 필요 ${need}명 — 남는 ${n - need}명은 교체 선수로 팀에 고르게 배치됩니다.`, "warn");
+  else setMsg(`참가 ${n}명 · 필요 ${need}명 — ${need - n}명이 부족합니다. 팀 수나 인원을 줄여 주세요.`, "err");
+}
+
+/* ---------- 팀 나누기 알고리즘 ----------
+   1) 평균 능력치 순 스네이크 드래프트로 초기 배치 (무작위 섞기 포함)
+   2) 두 팀 간 선수 교환으로 비용(팀 총합 편차 + 능력치별 편차 + GK 쏠림)을 줄이는 국소 탐색
+   3) 여러 번 시도 후 가장 균형 잡힌 결과 선택 */
+function cost(teams) {
+  const T = teams.length;
+  const sum = (arr, f) => arr.reduce((a, p) => a + f(p), 0);
+  const variance = (vals) => { const m = vals.reduce((a, b) => a + b, 0) / vals.length; return vals.reduce((a, v) => a + (v - m) ** 2, 0) / vals.length; };
+  // 팀 인원이 다를 수 있으니 평균(인당) 기준으로도 비교
+  let c = variance(teams.map(t => sum(t, ovr) / t.length)) * 10;
+  for (let i = 0; i < SKILLS.length; i++) c += variance(teams.map(t => sum(t, p => p.skills[i]) / t.length)) * 2;
+  for (const pos of ["GK", "DF", "MF", "FW"]) c += variance(teams.map(t => t.filter(p => p.pos === pos).length)) * (pos === "GK" ? 8 : 1.5);
+  return c;
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function makeTeams(list, T) {
+  let best = null, bestCost = Infinity;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    // 약간의 노이즈를 섞어 매번 다른 조합이 나오도록
+    const sorted = shuffle([...list]).sort((a, b) => (ovr(b) + Math.random() * 0.8) - (ovr(a) + Math.random() * 0.8));
+    const teams = Array.from({ length: T }, () => []);
+    sorted.forEach((p, i) => {
+      const round = Math.floor(i / T), k = i % T;
+      teams[round % 2 === 0 ? k : T - 1 - k].push(p);
+    });
+    let c = cost(teams), improved = true;
+    while (improved) {
+      improved = false;
+      for (let a = 0; a < T; a++) for (let b = a + 1; b < T; b++)
+        for (let i = 0; i < teams[a].length; i++) for (let j = 0; j < teams[b].length; j++) {
+          [teams[a][i], teams[b][j]] = [teams[b][j], teams[a][i]];
+          const nc = cost(teams);
+          if (nc < c - 1e-9) { c = nc; improved = true; }
+          else [teams[a][i], teams[b][j]] = [teams[b][j], teams[a][i]];
+        }
+    }
+    if (c < bestCost) { bestCost = c; best = teams.map(t => [...t]); }
+  }
+  return best;
+}
+
+function run() {
+  const T = Math.floor(+$("teamCount").value), S = Math.floor(+$("teamSize").value);
+  const list = players.filter(p => p.on && p.name.trim());
+  if (T < 2 || S < 1) return setMsg("팀 수는 2 이상, 팀당 인원은 1 이상이어야 합니다.", "err");
+  if (list.length < T * S) return updateCountMsg();
+  const teams = makeTeams(list, T);
+  // 팀 내에서는 평균 높은 순 정렬, 정원 초과분은 '교체'로 표시
+  lastResult = teams.map(t => t.sort((a, b) => ovr(b) - ovr(a)));
+  renderResult(S);
+  save();
+}
+
+function renderResult(S) {
+  const box = $("teams");
+  box.innerHTML = "";
+  lastResult.forEach((t, i) => {
+    const avg = t.reduce((a, p) => a + ovr(p), 0) / t.length;
+    const skillAvg = SKILLS.map((s, k) => `${s} ${(t.reduce((a, p) => a + p.skills[k], 0) / t.length).toFixed(1)}`).join(" · ");
+    const div = document.createElement("div");
+    div.className = "team";
+    div.innerHTML = `<h3><span>${i + 1}팀</span><span>평균 ${avg.toFixed(2)}</span></h3><ul></ul><div class="stats">${skillAvg}</div>`;
+    const ul = div.querySelector("ul");
+    t.forEach((p, idx) => {
+      const li = document.createElement("li");
+      const left = document.createElement("span");
+      left.textContent = p.name;
+      if (p.pos) left.insertAdjacentHTML("beforeend", `<span class="tag">${p.pos}</span>`);
+      if (idx >= S) left.insertAdjacentHTML("beforeend", `<span class="tag">교체</span>`);
+      li.appendChild(left);
+      li.insertAdjacentHTML("beforeend", `<span>${ovr(p).toFixed(1)}</span>`);
+      ul.appendChild(li);
+    });
+    box.appendChild(div);
+  });
+  $("resultCard").hidden = false;
+  $("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ---------- 버튼 ---------- */
+$("addBtn").onclick = () => { addPlayer(); renderPlayers(); save(); };
+$("clearBtn").onclick = () => { if (confirm("명단을 모두 지울까요?")) { players = []; renderPlayers(); save(); } };
+$("sampleBtn").onclick = () => {
+  const names = ["민준","서준","도윤","예준","시우","하준","주원","지호","지후","준우"];
+  const pos = ["GK","DF","DF","MF","MF","FW","GK","DF","MF","FW"];
+  names.forEach((n, i) => addPlayer(n, SKILLS.map(() => 3 + Math.floor(Math.random() * 7)), pos[i]));
+  renderPlayers(); save();
+};
+$("bulkAddBtn").onclick = () => {
+  const lines = $("bulkText").value.split("\n").map(l => l.trim()).filter(Boolean);
+  lines.forEach(l => {
+    const parts = l.split(/[,\t]/).map(s => s.trim());
+    const pos = POSITIONS.includes((parts[6] || "").toUpperCase()) ? parts[6].toUpperCase() : "";
+    addPlayer(parts[0], SKILLS.map((_, i) => parts[i + 1]), pos);
+  });
+  $("bulkText").value = "";
+  renderPlayers(); save();
+};
+$("teamCount").oninput = $("teamSize").oninput = () => { save(); updateCountMsg(); };
+$("makeBtn").onclick = run;
+$("reshuffleBtn").onclick = run;
+$("shareBtn").onclick = async () => {
+  const data = { players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
+  const url = location.href.split("#")[0] + "#d=" + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  history.replaceState(null, "", url);
+  try { await navigator.clipboard.writeText(url); setMsg("공유 링크를 클립보드에 복사했습니다."); }
+  catch (e) { prompt("이 링크를 복사하세요:", url); }
+};
+$("copyBtn").onclick = async () => {
+  if (!lastResult) return;
+  const S = +$("teamSize").value;
+  const text = lastResult.map((t, i) => `${i + 1}팀: ` + t.map((p, k) => p.name + (k >= S ? "(교체)" : "")).join(", ")).join("\n");
+  try { await navigator.clipboard.writeText(text); alert("결과를 복사했습니다.\n\n" + text); }
+  catch (e) { prompt("결과:", text); }
+};
+
+renderHead();
+load();
+renderPlayers();
+</script>
+</body>
+</html>
