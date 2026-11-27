@@ -168,12 +168,12 @@
       </div>
       <div class="toolbar">
         <span class="pill" id="countPill"></span>
-        <button id="saveJsonBtn">Save JSON</button>
-        <button id="jsonBtn">Import JSON</button>
+        <button id="saveJsonBtn">Save Roster</button>
+        <button id="jsonBtn">Load Roster</button>
         <input type="file" id="jsonFile" accept=".json,application/json" hidden>
       </div>
     </div>
-    <p class="privacy">🔒 <b>Your players stay on this phone.</b> Save JSON and Import JSON work only on this device. Nothing is uploaded or sent anywhere, and nobody else can see your list.</p>
+    <p class="privacy">🔒 <b>Your players stay on this phone.</b> Save Roster and Load Roster work only on this device. Nothing is uploaded or sent anywhere, and nobody else can see your list.</p>
     <div class="cards" id="playerBody"></div>
   </section>
 
@@ -358,7 +358,7 @@ function renderPlayers(focusLast = false) {
   add.onclick = () => { players.push({ name: "", skills: [3, 3, 3, 3, 3], pos: "", on: true }); renderPlayers(true); save(); };
   body.appendChild(add);
 
-  if (!players.length) body.insertAdjacentHTML("beforeend", `<p class="empty">No players yet. Tap <b>Add player</b>, or <b>Import JSON</b> to load a list.</p>`);
+  if (!players.length) body.insertAdjacentHTML("beforeend", `<p class="empty">No players yet. Tap <b>Add player</b>, or <b>Load Roster</b> to load a list.</p>`);
 
   if (focusLast) {
     const inputs = body.querySelectorAll(".pc-name");
@@ -469,17 +469,17 @@ function renderResult(S) {
 /* ---------- Buttons ---------- */
 $("makeBtn").onclick = run;
 $("reshuffleBtn").onclick = run;
-// Download the roster as a JSON file to this device (same format Import JSON reads)
+// Download the roster as a JSON file to this device (same format Load Roster reads)
 $("saveJsonBtn").onclick = () => {
   const list = players.filter(p => p.name.trim()).map(p => ({ name: p.name.trim(), pos: p.pos, skills: p.skills, on: p.on }));
-  if (!list.length) return alert("There are no named players to save yet.");
+  if (!list.length) return alert("There are no named players to save in the roster yet.");
   const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `soccer-players-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `soccer-roster-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  setTimeout(() => alert(`🔒 Saved ${list.length} players to a file on this phone (${a.download}).\nThe file stays on this device. Nothing was uploaded.`), 300);
+  setTimeout(() => alert(`🔒 Saved a roster of ${list.length} players on this phone (${a.download}).\nThe file stays on this device. Nothing was uploaded.`), 300);
 };
 $("jsonBtn").onclick = () => $("jsonFile").click();
 $("jsonFile").onchange = async (e) => {
@@ -489,8 +489,8 @@ $("jsonFile").onchange = async (e) => {
   try {
     const { added, updated } = importJSON(await file.text());
     renderPlayers(); save();
-    alert(`🔒 Loaded on this phone only: ${added} added, ${updated} updated.\nNothing was uploaded or shared.`);
-  } catch (err) { alert("Couldn't read that JSON file: " + err.message); }
+    alert(`🔒 Roster loaded on this phone only: ${added} added, ${updated} updated.\nNothing was uploaded or shared.`);
+  } catch (err) { alert("Couldn't read that roster file: " + err.message); }
 };
 $("copyBtn").onclick = async () => {
   if (!lastResult) return;

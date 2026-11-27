@@ -21,10 +21,10 @@ If more players are checked in than `teams × players per team`, the extras are 
 ## Privacy
 The roster is saved only in the browser on your device (localStorage). There is no share link, the page ignores roster data in URLs, and nothing is sent to any server. Other people opening the same URL see an empty roster.
 
-## Saving and importing players (JSON)
-**Save JSON** downloads the roster as `soccer-players-YYYY-MM-DD.json` to the device (on iPhone it goes to Files → Downloads). Keep this file as a backup.
+## Save Roster / Load Roster
+**Save Roster** saves the roster as a file, `soccer-roster-YYYY-MM-DD.json`, to the device (on iPhone it goes to Files → Downloads). Keep this file as a backup.
 
-Tap **Import JSON** next to the player count. If a player's name is already on the list, that player is updated. New names are added. The result is saved on the device.
+Tap **Load Roster** next to the player count to load a saved roster file. If a player's name is already on the list, that player is updated. New names are added. The result is saved on the device.
 
 ```json
 [
