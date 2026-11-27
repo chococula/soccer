@@ -34,7 +34,7 @@
   button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
   button.danger { color: var(--err); }
   /* ---------- Player cards ---------- */
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
   .pcard {
     --c1: #c98a4b; --c2: #8a5428; --ink: #2a1708; --chip: rgba(255,255,255,.35);
     position: relative; color: var(--ink); border-radius: 18px 18px 26px 26px; padding: 12px 14px 14px;
@@ -64,7 +64,7 @@
   .pc-name::placeholder { color: inherit; opacity: .45; }
   .pc-stats { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
   .pc-stat { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-  .pc-stat span { font-weight: 800; font-size: 12px; opacity: .75; letter-spacing: .5px; width: 34px; }
+  .pc-stat span { font-weight: 800; font-size: 12px; opacity: .8; white-space: nowrap; }
   .stars { display: flex; }
   .star { background: none; border: 0; padding: 0 2px; font-size: 20px; line-height: 1; cursor: pointer;
     color: inherit; opacity: .25; transition: transform .1s, opacity .1s; }
@@ -78,8 +78,8 @@
     .pc-avatar { width: 72px; height: 72px; font-size: 26px; }
     .pc-name { font-size: 18px; }
     .pc-stats { gap: 6px; margin-top: 14px; }
-    .pc-stat span { font-size: 14px; width: 44px; }
-    .star { font-size: 32px; padding: 0 5px; }   /* big tap targets */
+    .pc-stat span { font-size: 15px; }
+    .star { font-size: 30px; padding: 0 4px; }   /* big tap targets */
     .pc-in { font-size: 14px; }
   }
   .pc-in { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
@@ -179,7 +179,6 @@ function load() {
 }
 
 /* ---------- Player cards ---------- */
-const ABBR = ["SPD", "PAS", "SHO", "DEF", "STA"];
 const rating = (p) => Math.round(ovr(p) * 20);          // 1–5 star average shown as 20–100
 const tier = (r) => r >= 85 ? "elite" : r >= 70 ? "gold" : r >= 55 ? "silver" : "bronze";
 const initials = (name) => (name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
