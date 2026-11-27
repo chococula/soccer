@@ -6,158 +6,260 @@
 <title>Soccer Team Maker</title>
 <style>
   :root {
-    --bg: #f5f7f5; --card: #ffffff; --text: #1b1f1c; --muted: #66706a;
-    --line: #dde3df; --accent: #1f8a4c; --accent-text: #ffffff; --warn: #b54708; --err: #c0262d;
+    --bg: #f3f6f4; --card: #ffffff; --text: #18201b; --muted: #637069;
+    --line: #dbe2dd; --accent: #1f8a4c; --accent-text: #ffffff; --accent-soft: #e3f3ea;
+    --warn: #a14a00; --err: #c0262d;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #121513; --card: #1c211e; --text: #e7ece9; --muted: #9aa59f;
-      --line: #2e3631; --accent: #3fb872; --accent-text: #0d1a12; --warn: #f0a050; --err: #ff6b70;
+      --bg: #101412; --card: #1a201c; --text: #e7ece9; --muted: #98a49d;
+      --line: #2c3530; --accent: #3fb872; --accent-text: #0b1810; --accent-soft: #1d3326;
+      --warn: #f0a050; --err: #ff6b70;
     }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
     font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; }
-  h1 { font-size: 22px; margin: 0 0 4px; }
-  h2 { font-size: 17px; margin: 0 0 12px; }
-  p.sub { color: var(--muted); margin: 0 0 20px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
-  label.f { display: flex; flex-direction: column; font-size: 13px; color: var(--muted); gap: 4px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 120px; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  h2 { font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .step { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: var(--accent-text); font-size: 14px; font-weight: 800; }
+  .guide { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--muted); font-size: 14px; margin: 0 0 20px; padding: 0; list-style: none; }
+  .guide b { color: var(--text); }
+  section { margin-bottom: 28px; }
+  .sec-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
   input, select, textarea, button { font: inherit; color: inherit; }
-  input[type=text], input[type=number], select, textarea {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
-  input[type=number] { width: 64px; }
-  textarea { width: 100%; min-height: 90px; }
-  button { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
-  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+  button { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 700; }
+  button.link { border: 0; background: none; padding: 4px 6px; color: var(--accent); font-weight: 600; }
   button.danger { color: var(--err); }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pill { font-size: 13px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+  .pill b { color: var(--text); }
+
+  details.more { position: relative; }
+  details.more summary { list-style: none; cursor: pointer; border: 1px solid var(--line); background: var(--card);
+    border-radius: 10px; padding: 8px 14px; }
+  details.more summary::-webkit-details-marker { display: none; }
+  .menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: min(340px, calc(100vw - 32px));
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.18); display: flex; flex-direction: column; gap: 8px; }
+  .menu textarea { width: 100%; min-height: 90px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+  .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
+
   /* ---------- Player cards ---------- */
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
   .pcard {
-    --c1: #c98a4b; --c2: #8a5428; --ink: #2a1708; --chip: rgba(255,255,255,.35);
-    position: relative; color: var(--ink); border-radius: 18px 18px 26px 26px; padding: 12px 14px 14px;
+    --c1: #c98a4b; --c2: #8a5428; --ink: #2a1708; --chip: rgba(255,255,255,.35); --star: #5a2d0c;
+    position: relative; color: var(--ink); border-radius: 18px 18px 26px 26px; padding: 14px 16px 12px;
     background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.55), transparent 60%),
                 linear-gradient(160deg, var(--c1), var(--c2));
     box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 0 0 2px rgba(255,255,255,.35);
-    transition: transform .15s, opacity .15s, filter .15s;
+    transition: opacity .15s, filter .15s;
   }
-  .pcard:hover { transform: translateY(-2px); }
-  .pcard.silver { --c1: #e4e8ec; --c2: #9aa4ae; --ink: #1d242b; }
-  .pcard.gold   { --c1: #f7dd7a; --c2: #c79a1e; --ink: #2b2104; }
-  .pcard.elite  { --c1: #4b4f7a; --c2: #15162e; --ink: #f4e7b0; --chip: rgba(255,255,255,.14); }
-  .pcard.off { opacity: .45; filter: grayscale(.8); }
-  .pc-top { display: flex; align-items: flex-start; gap: 8px; }
+  .pcard.silver { --c1: #e4e8ec; --c2: #9aa4ae; --ink: #1d242b; --star: #2b3540; }
+  .pcard.gold   { --c1: #f7dd7a; --c2: #c79a1e; --ink: #2b2104; --star: #6b4a00; }
+  .pcard.elite  { --c1: #4b4f7a; --c2: #15162e; --ink: #f4e7b0; --chip: rgba(255,255,255,.14); --star: #ffd34d; }
+  .pcard.off { opacity: .5; filter: grayscale(.9); }
+  .pcard.off .switch { filter: none; }
+
+  .pc-top { display: flex; align-items: flex-start; justify-content: space-between; }
   .pc-ovr { font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
   .pc-ovr small { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; opacity: .7; }
-  .pc-pos { margin-top: 2px; background: var(--chip); color: inherit; border: 0; border-radius: 6px;
-    padding: 2px 4px; font-weight: 700; font-size: 13px; }
-  .pc-pos option { color: #111; }
-  .pc-del { margin-left: auto; background: transparent; border: 0; color: inherit; opacity: .6; padding: 2px 4px; font-size: 14px; }
-  .pc-del:hover { opacity: 1; }
-  .pc-avatar { width: 58px; height: 58px; margin: 2px auto 6px; border-radius: 50%; display: grid; place-items: center;
+
+  /* Playing toggle */
+  .switch { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; cursor: pointer; user-select: none; }
+  .switch input { position: absolute; opacity: 0; pointer-events: none; }
+  .switch i { width: 40px; height: 22px; border-radius: 999px; background: rgba(0,0,0,.25); position: relative; transition: background .15s; }
+  .switch i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+  .switch input:checked + i { background: #1f8a4c; }
+  .switch input:checked + i::after { transform: translateX(18px); }
+  .switch input:focus-visible + i { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .pc-avatar { width: 60px; height: 60px; margin: 4px auto 6px; border-radius: 50%; display: grid; place-items: center;
     background: var(--chip); font-size: 22px; font-weight: 800; letter-spacing: 1px; }
-  .pc-name { width: 100%; text-align: center; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: .5px;
-    background: transparent !important; border: 0 !important; border-bottom: 2px solid rgba(0,0,0,.2) !important;
-    border-radius: 0 !important; color: inherit; padding: 2px 0 4px !important; }
-  .pc-name::placeholder { color: inherit; opacity: .45; }
-  .pc-stats { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+  .pc-name { width: 100%; text-align: center; font-weight: 800; font-size: 17px; text-transform: uppercase; letter-spacing: .5px;
+    background: transparent; border: 0; border-bottom: 2px dashed rgba(0,0,0,.25); color: inherit; padding: 2px 0 4px; outline: none; }
+  .pc-name:focus { border-bottom-style: solid; border-bottom-color: var(--ink); }
+  .pc-name::placeholder { color: inherit; opacity: .5; text-transform: none; font-weight: 600; }
+
+  .pc-label { font-size: 11px; font-weight: 800; letter-spacing: 1px; opacity: .65; margin: 12px 0 4px; text-transform: uppercase; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .seg button { border: 0; background: var(--chip); color: inherit; border-radius: 8px; padding: 6px 0; font-weight: 800; font-size: 13px; }
+  .seg button.on { background: var(--ink); color: var(--c1); }
+
+  .pc-stats { display: flex; flex-direction: column; gap: 2px; }
   .pc-stat { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-  .pc-stat span { font-weight: 800; font-size: 12px; opacity: .8; white-space: nowrap; }
+  .pc-stat span { font-weight: 700; font-size: 13px; white-space: nowrap; }
   .stars { display: flex; }
-  .star { background: none; border: 0; padding: 0 2px; font-size: 20px; line-height: 1; cursor: pointer;
-    color: inherit; opacity: .25; transition: transform .1s, opacity .1s; }
-  .star.on { opacity: 1; color: var(--star, currentColor); text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .star { background: none; border: 0; padding: 0 2px; font-size: 21px; line-height: 1.1; cursor: pointer;
+    color: inherit; opacity: .22; transition: transform .1s, opacity .1s; }
+  .star.on { opacity: 1; color: var(--star); text-shadow: 0 1px 2px rgba(0,0,0,.25); }
   .star:active { transform: scale(1.3); }
-  .pcard.bronze { --star: #5a2d0c; } .pcard.silver { --star: #2b3540; }
-  .pcard.gold { --star: #6b4a00; } .pcard.elite { --star: #ffd34d; }
+
+  .pc-remove { display: block; margin: 10px auto 0; background: none; border: 0; color: inherit; opacity: .55; font-size: 12px; font-weight: 700; padding: 4px 8px; }
+  .pc-remove:hover { opacity: 1; text-decoration: underline; }
+
+  .addcard { border: 2px dashed var(--line); border-radius: 18px 18px 26px 26px; background: transparent; min-height: 200px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-weight: 700; }
+  .addcard:hover { border-color: var(--accent); color: var(--accent); }
+  .addcard .plus { font-size: 44px; line-height: 1; font-weight: 300; }
+
+  .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 10px 0 0; }
+
+  /* ---------- Settings ---------- */
+  .settings { display: flex; flex-wrap: wrap; gap: 14px; }
+  .stepper { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 200px; flex: 1; }
+  .stepper .lbl { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .stepper .ctl { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
+  .stepper button { width: 44px; height: 44px; border-radius: 50%; padding: 0; font-size: 22px; font-weight: 700; }
+  .stepper output { font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 2ch; text-align: center; }
+
+  /* ---------- Sticky action bar ---------- */
+  .actionbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--card); border-top: 1px solid var(--line);
+    box-shadow: 0 -6px 20px rgba(0,0,0,.08); }
+  .actionbar .inner { max-width: 1100px; margin: 0 auto; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; }
+  .actionbar .status { flex: 1; font-size: 14px; line-height: 1.3; }
+  .actionbar .status.warn { color: var(--warn); } .actionbar .status.err { color: var(--err); }
+  .actionbar button.primary { padding: 12px 22px; font-size: 16px; border-radius: 12px; white-space: nowrap; }
+  .actionbar button.primary:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ---------- Results ---------- */
+  .balance { font-size: 14px; color: var(--muted); margin: 0 0 12px; }
+  .balance b { color: var(--text); }
+  .teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+  .team { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .team header { background: var(--tc); color: #fff; padding: 10px 14px; display: flex; justify-content: space-between; align-items: baseline; }
+  .team header b { font-size: 17px; }
+  .team header span { font-size: 13px; font-weight: 700; opacity: .95; }
+  .team ul { list-style: none; margin: 0; padding: 6px 14px; }
+  .team li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .team li:last-child { border-bottom: 0; }
+  .team li .nm { flex: 1; font-weight: 600; }
+  .team li .ov { font-weight: 800; font-variant-numeric: tabular-nums; }
+  .chip { font-size: 11px; font-weight: 800; border-radius: 6px; padding: 1px 6px; background: var(--accent-soft); color: var(--text); }
+  .chip.sub { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+  .team .stats { font-size: 12px; color: var(--muted); padding: 0 14px 12px; display: grid; grid-template-columns: 1fr auto; gap: 0 10px; }
+
   @media (max-width: 600px) {
+    h1 { font-size: 21px; }
     .cards { grid-template-columns: 1fr; gap: 16px; }
-    .pcard { padding: 16px 18px 18px; }
-    .pc-avatar { width: 72px; height: 72px; font-size: 26px; }
-    .pc-name { font-size: 18px; }
-    .pc-stats { gap: 6px; margin-top: 14px; }
+    .pcard { padding: 16px 18px 12px; }
+    .pc-avatar { width: 70px; height: 70px; font-size: 26px; }
+    .pc-name { font-size: 19px; }
+    .seg button { padding: 9px 0; font-size: 15px; }
+    .pc-stats { gap: 6px; }
     .pc-stat span { font-size: 15px; }
     .star { font-size: 30px; padding: 0 4px; }   /* big tap targets */
-    .pc-in { font-size: 14px; }
+    .addcard { min-height: 110px; }
+    .actionbar .status { font-size: 13px; }
   }
-  .pc-in { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
-  .pc-in input { accent-color: var(--ink); }
-  .msg { margin-top: 10px; font-size: 14px; }
-  .msg.warn { color: var(--warn); } .msg.err { color: var(--err); }
-  .teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
-  .team { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
-  .team h3 { margin: 0 0 6px; font-size: 16px; display: flex; justify-content: space-between; }
-  .team ul { list-style: none; margin: 0; padding: 0; }
-  .team li { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
-  .team li:last-child { border-bottom: 0; }
-  .tag { font-size: 11px; color: var(--muted); margin-left: 6px; }
-  .stats { font-size: 12px; color: var(--muted); margin-top: 8px; font-variant-numeric: tabular-nums; }
-  details summary { cursor: pointer; color: var(--muted); }
 </style>
 </head>
 <body>
 <main>
   <h1>⚽ Soccer Team Maker</h1>
-  <p class="sub">Rate each player's skills with 1–5 stars, choose the number of teams and players per team, and get evenly balanced teams.</p>
+  <ol class="guide">
+    <li><b>1.</b> Add players and rate them</li>
+    <li><b>2.</b> Pick team count &amp; size</li>
+    <li><b>3.</b> Tap <b>Make teams</b></li>
+  </ol>
 
-  <section class="card">
-    <h2>1. Players</h2>
-    <div class="cards" id="playerBody"></div>
-    <div class="row" style="margin-top:12px">
-      <button id="addBtn">+ Add player</button>
-      <button id="sampleBtn">Sample data</button>
-      <button id="clearBtn" class="danger">Clear all</button>
-    </div>
-    <details style="margin-top:12px">
-      <summary>Bulk paste (name, speed, passing, shooting, defense, stamina, position — skills 1–5)</summary>
-      <textarea id="bulkText" placeholder="John, 4, 3, 5, 2, 4, FW&#10;Mike, 3, 4, 3, 5, 3, DF"></textarea>
-      <div class="row" style="margin-top:8px">
-        <button id="bulkAddBtn">Add to list</button>
+  <section>
+    <div class="sec-head">
+      <div>
+        <h2><span class="step">1</span> Players</h2>
+        <p class="hint">Tap the stars to rate each skill. Switch off anyone who isn't playing today.</p>
       </div>
-    </details>
-  </section>
-
-  <section class="card">
-    <h2>2. Team settings</h2>
-    <div class="row">
-      <label class="f">Teams <input type="number" id="teamCount" min="2" max="20" value="2"></label>
-      <label class="f">Players per team <input type="number" id="teamSize" min="1" max="30" value="5"></label>
-      <button class="primary" id="makeBtn">Make teams</button>
-      <button id="shareBtn">Share link</button>
+      <div class="toolbar">
+        <span class="pill" id="countPill"></span>
+        <details class="more" id="moreMenu">
+          <summary>More ▾</summary>
+          <div class="menu">
+            <button id="allOnBtn">Everyone is playing</button>
+            <button id="sampleBtn">Add sample players</button>
+            <hr>
+            <label class="hint" for="bulkText">Paste many players, one per line:<br><code>Name, Speed, Passing, Shooting, Defense, Stamina, Position</code></label>
+            <textarea id="bulkText" placeholder="John, 4, 3, 5, 2, 4, FW&#10;Mike, 3, 4, 3, 5, 3, DF"></textarea>
+            <button id="bulkAddBtn">Add pasted players</button>
+            <hr>
+            <button id="clearBtn" class="danger">Remove all players</button>
+          </div>
+        </details>
+      </div>
     </div>
-    <div id="msg" class="msg"></div>
+    <div class="cards" id="playerBody"></div>
   </section>
 
-  <section class="card" id="resultCard" hidden>
-    <h2>3. Teams</h2>
+  <section>
+    <div class="sec-head"><h2><span class="step">2</span> Teams</h2></div>
+    <div class="settings">
+      <div class="stepper">
+        <div class="lbl">Number of teams</div>
+        <div class="ctl">
+          <button type="button" data-step="teamCount" data-d="-1" aria-label="Fewer teams">−</button>
+          <output id="teamCountOut"></output>
+          <button type="button" data-step="teamCount" data-d="1" aria-label="More teams">+</button>
+        </div>
+      </div>
+      <div class="stepper">
+        <div class="lbl">Players per team</div>
+        <div class="ctl">
+          <button type="button" data-step="teamSize" data-d="-1" aria-label="Fewer players per team">−</button>
+          <output id="teamSizeOut"></output>
+          <button type="button" data-step="teamSize" data-d="1" aria-label="More players per team">+</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="resultCard" hidden>
+    <div class="sec-head">
+      <h2><span class="step">3</span> Your teams</h2>
+      <div class="toolbar">
+        <button id="reshuffleBtn">🔀 Shuffle again</button>
+        <button id="copyBtn">Copy</button>
+        <button id="shareBtn">Share link</button>
+      </div>
+    </div>
+    <p class="balance" id="balance"></p>
     <div class="teams" id="teams"></div>
-    <div class="row" style="margin-top:12px">
-      <button id="reshuffleBtn">Try another combination</button>
-      <button id="copyBtn">Copy result</button>
-    </div>
   </section>
 </main>
+
+<div class="actionbar">
+  <div class="inner">
+    <div class="status" id="msg"></div>
+    <button class="primary" id="makeBtn">Make teams</button>
+  </div>
+</div>
 
 <script>
 const SKILLS = ["Speed", "Passing", "Shooting", "Defense", "Stamina"];
 const POSITIONS = ["", "GK", "DF", "MF", "FW"];
+const TEAM_COLORS = ["#1f8a4c", "#2563c9", "#d9541e", "#7b3fc4", "#c42a4a", "#0f8a8a", "#a66a00", "#4a5568"];
 const STORE_KEY = "soccerTeamMgr.v1";
 const MAX = 5;   // skills are rated 1–5 stars
 
 let players = [];   // {name, skills:[5], pos, on:true}
+let settings = { teamCount: 2, teamSize: 5 };
 let lastResult = null;
 
 const $ = (id) => document.getElementById(id);
 const clamp = (v) => Math.max(1, Math.min(MAX, Math.round(Number(v) || 3)));
 const ovr = (p) => p.skills.reduce((a, b) => a + b, 0) / SKILLS.length;
+const rating = (p) => Math.round(ovr(p) * 20);          // 1–5 star average shown as 20–100
+const tier = (r) => r >= 85 ? "elite" : r >= 70 ? "gold" : r >= 55 ? "silver" : "bronze";
+const initials = (name) => (name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const active = () => players.filter(p => p.on && p.name.trim());
 
 /* ---------- Save / load ---------- */
-function save() {
-  const data = { scale: MAX, players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
-}
+function snapshot() { return { scale: MAX, players, teamCount: settings.teamCount, teamSize: settings.teamSize }; }
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(snapshot())); } catch (e) {} }
 function applyData(data) {
   if (!data) return;
   // Older saves used a 1–10 scale; convert them to 1–5 stars
@@ -166,8 +268,8 @@ function applyData(data) {
     name: String(p.name || ""), skills: SKILLS.map((_, i) => clamp(old ? (p.skills?.[i] || 6) / 2 : p.skills?.[i])),
     pos: POSITIONS.includes(p.pos) ? p.pos : "", on: p.on !== false,
   }));
-  if (data.teamCount) $("teamCount").value = data.teamCount;
-  if (data.teamSize) $("teamSize").value = data.teamSize;
+  if (+data.teamCount) settings.teamCount = Math.max(2, Math.min(20, +data.teamCount));
+  if (+data.teamSize) settings.teamSize = Math.max(1, Math.min(30, +data.teamSize));
 }
 function load() {
   // Shared data in the URL hash (#d=...) takes priority
@@ -179,75 +281,108 @@ function load() {
 }
 
 /* ---------- Player cards ---------- */
-const rating = (p) => Math.round(ovr(p) * 20);          // 1–5 star average shown as 20–100
-const tier = (r) => r >= 85 ? "elite" : r >= 70 ? "gold" : r >= 55 ? "silver" : "bronze";
-const initials = (name) => (name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
-
 function refreshCard(card, p) {
   const r = rating(p);
   card.className = `pcard ${tier(r)}${p.on ? "" : " off"}`;
   card.querySelector(".pc-ovr b").textContent = r;
   card.querySelector(".pc-avatar").textContent = initials(p.name);
 }
-function renderPlayers() {
+function cardHTML(p) {
+  return (
+    `<div class="pc-top">` +
+      `<div class="pc-ovr"><b></b><small>OVR</small></div>` +
+      `<label class="switch"><span>Playing</span><input type="checkbox" data-k="on" ${p.on ? "checked" : ""}><i></i></label>` +
+    `</div>` +
+    `<div class="pc-avatar"></div>` +
+    `<input type="text" class="pc-name" data-k="name" placeholder="Tap to enter name" maxlength="24" autocomplete="off">` +
+    `<div class="pc-label">Position</div>` +
+    `<div class="seg">${POSITIONS.slice(1).map(x => `<button type="button" data-pos="${x}" class="${x === p.pos ? "on" : ""}">${x}</button>`).join("")}</div>` +
+    `<div class="pc-label">Skills</div>` +
+    `<div class="pc-stats">` +
+      p.skills.map((v, i) =>
+        `<div class="pc-stat"><span>${SKILLS[i]}</span><div class="stars">` +
+        [1, 2, 3, 4, 5].map(n => `<button type="button" class="star${n <= v ? " on" : ""}" data-skill="${i}" data-n="${n}" aria-label="${SKILLS[i]} ${n} of 5">★</button>`).join("") +
+        `</div></div>`).join("") +
+    `</div>` +
+    `<button type="button" class="pc-remove" data-k="del">Remove player</button>`
+  );
+}
+function renderPlayers(focusLast = false) {
   const body = $("playerBody");
   body.innerHTML = "";
   players.forEach((p, idx) => {
     const card = document.createElement("div");
-    card.innerHTML =
-      `<div class="pc-top">` +
-        `<div class="pc-ovr"><b></b><small>OVR</small></div>` +
-        `<select class="pc-pos" data-k="pos" title="Position">${POSITIONS.map(x => `<option value="${x}" ${x === p.pos ? "selected" : ""}>${x || "POS"}</option>`).join("")}</select>` +
-        `<button class="pc-del" data-k="del" title="Remove">✕</button>` +
-      `</div>` +
-      `<div class="pc-avatar"></div>` +
-      `<input type="text" class="pc-name" data-k="name" placeholder="Player name" maxlength="24">` +
-      `<div class="pc-stats">` +
-        p.skills.map((v, i) =>
-          `<div class="pc-stat"><span>${SKILLS[i]}</span><div class="stars">` +
-          [1, 2, 3, 4, 5].map(n => `<button type="button" class="star${n <= v ? " on" : ""}" data-skill="${i}" data-n="${n}" aria-label="${SKILLS[i]} ${n}">★</button>`).join("") +
-          `</div></div>`).join("") +
-      `</div>` +
-      `<label class="pc-in"><input type="checkbox" data-k="on" ${p.on ? "checked" : ""}> Playing today</label>`;
+    card.innerHTML = cardHTML(p);
     card.querySelector('[data-k="name"]').value = p.name;
     refreshCard(card, p);
     card.addEventListener("input", (e) => {
       const k = e.target.dataset.k;
       if (k === "name") p.name = e.target.value;
       else if (k === "on") p.on = e.target.checked;
-      else if (k === "pos") p.pos = e.target.value;
       refreshCard(card, p);
-      save(); updateCountMsg();
+      save(); updateStatus();
     });
     card.addEventListener("click", (e) => {
       const star = e.target.closest(".star");
-      if (!star) return;
-      const i = +star.dataset.skill, n = +star.dataset.n;
-      p.skills[i] = n;
-      star.parentElement.querySelectorAll(".star").forEach(s => s.classList.toggle("on", +s.dataset.n <= n));
-      refreshCard(card, p);
-      save();
+      if (star) {
+        const i = +star.dataset.skill, n = +star.dataset.n;
+        p.skills[i] = n;
+        star.parentElement.querySelectorAll(".star").forEach(s => s.classList.toggle("on", +s.dataset.n <= n));
+      }
+      const pos = e.target.closest("[data-pos]");
+      if (pos) {
+        p.pos = p.pos === pos.dataset.pos ? "" : pos.dataset.pos;   // tap again to clear
+        card.querySelectorAll("[data-pos]").forEach(b => b.classList.toggle("on", b.dataset.pos === p.pos));
+      }
+      if (e.target.closest('[data-k="del"]')) {
+        if (p.name.trim() && !confirm(`Remove ${p.name}?`)) return;
+        players.splice(idx, 1); renderPlayers(); save(); return;
+      }
+      if (star || pos) { refreshCard(card, p); save(); }
     });
-    card.querySelector('[data-k="del"]').onclick = () => { players.splice(idx, 1); renderPlayers(); save(); };
     body.appendChild(card);
   });
-  updateCountMsg();
-}
-function addPlayer(name = "", skills = [3, 3, 3, 3, 3], pos = "") {
-  players.push({ name, skills: skills.map(clamp), pos, on: true });
+
+  const add = document.createElement("button");
+  add.type = "button"; add.className = "addcard";
+  add.innerHTML = `<span class="plus">+</span><span>Add player</span>`;
+  add.onclick = () => { players.push({ name: "", skills: [3, 3, 3, 3, 3], pos: "", on: true }); renderPlayers(true); save(); };
+  body.appendChild(add);
+
+  if (!players.length) body.insertAdjacentHTML("beforeend", `<p class="empty">No players yet. Tap <b>Add player</b>, or use <b>More ▾</b> to paste a list or try sample players.</p>`);
+
+  if (focusLast) {
+    const inputs = body.querySelectorAll(".pc-name");
+    const last = inputs[inputs.length - 1];
+    last.scrollIntoView({ behavior: "smooth", block: "center" });
+    last.focus({ preventScroll: true });
+  }
+  updateStatus();
 }
 
-/* ---------- Messages ---------- */
-function setMsg(text, cls = "") { const m = $("msg"); m.textContent = text; m.className = "msg " + cls; }
-function updateCountMsg() {
-  const n = players.filter(p => p.on && p.name.trim()).length;
-  const t = +$("teamCount").value, s = +$("teamSize").value;
-  const need = t * s;
-  if (!n) return setMsg("Add some players to get started.");
-  if (n === need) setMsg(`${n} players · ${t} teams × ${s} — exact fit.`);
-  else if (n > need) setMsg(`${n} players · ${need} needed — the extra ${n - need} will be spread across teams as subs.`, "warn");
-  else setMsg(`${n} players · ${need} needed — ${need - n} short. Reduce the number of teams or players per team.`, "err");
+/* ---------- Settings & status ---------- */
+function renderSettings() {
+  $("teamCountOut").textContent = settings.teamCount;
+  $("teamSizeOut").textContent = settings.teamSize;
 }
+function updateStatus() {
+  const n = active().length, total = players.length;
+  const { teamCount: t, teamSize: s } = settings, need = t * s;
+  $("countPill").innerHTML = `<b>${n}</b> playing · ${total} total`;
+  const msg = $("msg"), btn = $("makeBtn");
+  let text, cls = "";
+  if (!n) { text = "Add players to get started."; cls = ""; }
+  else if (n < need) { text = `${t} teams × ${s} needs ${need} players. You have ${n} — ${need - n} short.`; cls = "err"; }
+  else if (n > need) { text = `${n} players for ${t} × ${s}. The extra ${n - need} join as subs.`; cls = "warn"; }
+  else { text = `${n} players → ${t} teams of ${s}. Ready!`; }
+  msg.textContent = text; msg.className = "status " + cls;
+  btn.disabled = n < need || !n;
+}
+document.querySelectorAll("[data-step]").forEach(b => b.onclick = () => {
+  const key = b.dataset.step, lim = key === "teamCount" ? [2, 20] : [1, 30];
+  settings[key] = Math.max(lim[0], Math.min(lim[1], settings[key] + +b.dataset.d));
+  renderSettings(); updateStatus(); save();
+});
 
 /* ---------- Balancing algorithm ----------
    1) Snake draft by average rating (with some randomness)
@@ -258,7 +393,6 @@ function cost(teams) {
   const sum = (arr, f) => arr.reduce((a, p) => a + f(p), 0);
   const variance = (vals) => { const m = vals.reduce((a, b) => a + b, 0) / vals.length; return vals.reduce((a, v) => a + (v - m) ** 2, 0) / vals.length; };
   // Team sizes may differ, so compare per-player averages
-  // (×4 keeps weights the same as the old 1–10 scale relative to the position term)
   let c = variance(teams.map(t => sum(t, ovr) / t.length)) * 40;
   for (let i = 0; i < SKILLS.length; i++) c += variance(teams.map(t => sum(t, p => p.skills[i]) / t.length)) * 8;
   for (const pos of ["GK", "DF", "MF", "FW"]) c += variance(teams.map(t => t.filter(p => p.pos === pos).length)) * (pos === "GK" ? 8 : 1.5);
@@ -270,7 +404,7 @@ function makeTeams(list, T) {
   let best = null, bestCost = Infinity;
   for (let attempt = 0; attempt < 40; attempt++) {
     // Add a little noise so each run gives a different combination
-    const sorted = shuffle([...list]).sort((a, b) => (ovr(b) + Math.random() * 0.8) - (ovr(a) + Math.random() * 0.8));
+    const sorted = shuffle([...list]).sort((a, b) => (ovr(b) + Math.random() * 0.4) - (ovr(a) + Math.random() * 0.4));
     const teams = Array.from({ length: T }, () => []);
     sorted.forEach((p, i) => {
       const round = Math.floor(i / T), k = i % T;
@@ -293,81 +427,75 @@ function makeTeams(list, T) {
 }
 
 function run() {
-  const T = Math.floor(+$("teamCount").value), S = Math.floor(+$("teamSize").value);
-  const list = players.filter(p => p.on && p.name.trim());
-  if (T < 2 || S < 1) return setMsg("You need at least 2 teams and at least 1 player per team.", "err");
-  if (list.length < T * S) return updateCountMsg();
-  const teams = makeTeams(list, T);
+  const { teamCount: T, teamSize: S } = settings;
+  const list = active();
+  if (list.length < T * S) return updateStatus();
   // Sort each team by rating; anyone beyond the team size is marked as a sub
-  lastResult = teams.map(t => t.sort((a, b) => ovr(b) - ovr(a)));
+  lastResult = makeTeams(list, T).map(t => t.sort((a, b) => ovr(b) - ovr(a)));
   renderResult(S);
-  save();
 }
 
 function renderResult(S) {
+  const avgs = lastResult.map(t => t.reduce((a, p) => a + rating(p), 0) / t.length);
+  const gap = Math.max(...avgs) - Math.min(...avgs);
+  $("balance").innerHTML = `Gap between strongest and weakest team: <b>${gap.toFixed(1)} OVR</b> ${gap <= 2 ? "— very even 👍" : gap <= 5 ? "— fairly even" : "— try shuffling again"}`;
   const box = $("teams");
   box.innerHTML = "";
   lastResult.forEach((t, i) => {
-    const avg = t.reduce((a, p) => a + ovr(p), 0) / t.length;
-    const skillAvg = SKILLS.map((s, k) => `${s} ${(t.reduce((a, p) => a + p.skills[k], 0) / t.length).toFixed(1)}`).join(" · ");
     const div = document.createElement("div");
     div.className = "team";
-    div.innerHTML = `<h3><span>Team ${i + 1}</span><span>Avg OVR ${(avg * 20).toFixed(1)}</span></h3><ul></ul><div class="stats">${skillAvg}</div>`;
-    const ul = div.querySelector("ul");
-    t.forEach((p, idx) => {
-      const li = document.createElement("li");
-      const left = document.createElement("span");
-      left.textContent = p.name;
-      if (p.pos) left.insertAdjacentHTML("beforeend", `<span class="tag">${p.pos}</span>`);
-      if (idx >= S) left.insertAdjacentHTML("beforeend", `<span class="tag">Sub</span>`);
-      li.appendChild(left);
-      li.insertAdjacentHTML("beforeend", `<span>${rating(p)}</span>`);
-      ul.appendChild(li);
-    });
+    div.style.setProperty("--tc", TEAM_COLORS[i % TEAM_COLORS.length]);
+    div.innerHTML =
+      `<header><b>Team ${i + 1}</b><span>Avg OVR ${avgs[i].toFixed(1)}</span></header>` +
+      `<ul>${t.map((p, k) =>
+        `<li><span class="nm">${esc(p.name)}</span>${p.pos ? `<span class="chip">${p.pos}</span>` : ""}${k >= S ? `<span class="chip sub">SUB</span>` : ""}<span class="ov">${rating(p)}</span></li>`).join("")}</ul>` +
+      `<div class="stats">${SKILLS.map((s, k) => `<span>${s}</span><span>${"★".repeat(Math.round(t.reduce((a, p) => a + p.skills[k], 0) / t.length))} ${(t.reduce((a, p) => a + p.skills[k], 0) / t.length).toFixed(1)}</span>`).join("")}</div>`;
     box.appendChild(div);
   });
   $("resultCard").hidden = false;
+  $("makeBtn").textContent = "Make again";
   $("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 /* ---------- Buttons ---------- */
-$("addBtn").onclick = () => { addPlayer(); renderPlayers(); save(); };
-$("clearBtn").onclick = () => { if (confirm("Remove all players?")) { players = []; renderPlayers(); save(); } };
+const closeMenu = () => $("moreMenu").removeAttribute("open");
+$("allOnBtn").onclick = () => { players.forEach(p => p.on = true); renderPlayers(); save(); closeMenu(); };
+$("clearBtn").onclick = () => { if (players.length && confirm("Remove all players?")) { players = []; renderPlayers(); save(); } closeMenu(); };
 $("sampleBtn").onclick = () => {
   const names = ["Alex","Ben","Chris","Dan","Eli","Finn","Gabe","Henry","Ian","Jack"];
   const pos = ["GK","DF","DF","MF","MF","FW","GK","DF","MF","FW"];
-  names.forEach((n, i) => addPlayer(n, SKILLS.map(() => 1 + Math.floor(Math.random() * 5)), pos[i]));
-  renderPlayers(); save();
+  names.forEach((n, i) => players.push({ name: n, skills: SKILLS.map(() => 1 + Math.floor(Math.random() * 5)), pos: pos[i], on: true }));
+  renderPlayers(); save(); closeMenu();
 };
 $("bulkAddBtn").onclick = () => {
   const lines = $("bulkText").value.split("\n").map(l => l.trim()).filter(Boolean);
   lines.forEach(l => {
     const parts = l.split(/[,\t]/).map(s => s.trim());
     const pos = POSITIONS.includes((parts[6] || "").toUpperCase()) ? parts[6].toUpperCase() : "";
-    addPlayer(parts[0], SKILLS.map((_, i) => parts[i + 1]), pos);
+    players.push({ name: parts[0], skills: SKILLS.map((_, i) => clamp(parts[i + 1])), pos, on: true });
   });
   $("bulkText").value = "";
-  renderPlayers(); save();
+  renderPlayers(); save(); closeMenu();
 };
-$("teamCount").oninput = $("teamSize").oninput = () => { save(); updateCountMsg(); };
+document.addEventListener("click", (e) => { if (!e.target.closest("#moreMenu")) closeMenu(); });
 $("makeBtn").onclick = run;
 $("reshuffleBtn").onclick = run;
 $("shareBtn").onclick = async () => {
-  const data = { scale: MAX, players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
-  const url = location.href.split("#")[0] + "#d=" + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  const url = location.href.split("#")[0] + "#d=" + btoa(unescape(encodeURIComponent(JSON.stringify(snapshot()))));
   history.replaceState(null, "", url);
-  try { await navigator.clipboard.writeText(url); setMsg("Share link copied to clipboard."); }
+  try { await navigator.clipboard.writeText(url); alert("Share link copied. Anyone who opens it gets this roster."); }
   catch (e) { prompt("Copy this link:", url); }
 };
 $("copyBtn").onclick = async () => {
   if (!lastResult) return;
-  const S = +$("teamSize").value;
+  const S = settings.teamSize;
   const text = lastResult.map((t, i) => `Team ${i + 1}: ` + t.map((p, k) => p.name + (k >= S ? " (sub)" : "")).join(", ")).join("\n");
-  try { await navigator.clipboard.writeText(text); alert("Result copied.\n\n" + text); }
-  catch (e) { prompt("Result:", text); }
+  try { await navigator.clipboard.writeText(text); alert("Teams copied.\n\n" + text); }
+  catch (e) { prompt("Teams:", text); }
 };
 
 load();
+renderSettings();
 renderPlayers();
 </script>
 </body>
