@@ -62,12 +62,26 @@
     background: transparent !important; border: 0 !important; border-bottom: 2px solid rgba(0,0,0,.2) !important;
     border-radius: 0 !important; color: inherit; padding: 2px 0 4px !important; }
   .pc-name::placeholder { color: inherit; opacity: .45; }
-  .pc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-top: 10px; }
-  .pc-stat { display: grid; grid-template-columns: 22px 34px 1fr; align-items: center; gap: 4px; font-size: 12px; }
-  .pc-stat:last-child { grid-column: 1 / -1; grid-template-columns: 22px 34px 1fr; }
-  .pc-stat b { font-size: 15px; text-align: right; font-variant-numeric: tabular-nums; }
-  .pc-stat span { font-weight: 700; opacity: .75; }
-  .pc-stat input[type=range] { width: 100%; accent-color: var(--ink); margin: 0; }
+  .pc-stats { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+  .pc-stat { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .pc-stat span { font-weight: 800; font-size: 12px; opacity: .75; letter-spacing: .5px; width: 34px; }
+  .stars { display: flex; }
+  .star { background: none; border: 0; padding: 0 2px; font-size: 20px; line-height: 1; cursor: pointer;
+    color: inherit; opacity: .25; transition: transform .1s, opacity .1s; }
+  .star.on { opacity: 1; color: var(--star, currentColor); text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .star:active { transform: scale(1.3); }
+  .pcard.bronze { --star: #5a2d0c; } .pcard.silver { --star: #2b3540; }
+  .pcard.gold { --star: #6b4a00; } .pcard.elite { --star: #ffd34d; }
+  @media (max-width: 600px) {
+    .cards { grid-template-columns: 1fr; gap: 16px; }
+    .pcard { padding: 16px 18px 18px; }
+    .pc-avatar { width: 72px; height: 72px; font-size: 26px; }
+    .pc-name { font-size: 18px; }
+    .pc-stats { gap: 6px; margin-top: 14px; }
+    .pc-stat span { font-size: 14px; width: 44px; }
+    .star { font-size: 32px; padding: 0 5px; }   /* big tap targets */
+    .pc-in { font-size: 14px; }
+  }
   .pc-in { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
   .pc-in input { accent-color: var(--ink); }
   .msg { margin-top: 10px; font-size: 14px; }
@@ -86,7 +100,7 @@
 <body>
 <main>
   <h1>⚽ Soccer Team Maker</h1>
-  <p class="sub">Rate each player's skills (1–10), choose the number of teams and players per team, and get evenly balanced teams.</p>
+  <p class="sub">Rate each player's skills with 1–5 stars, choose the number of teams and players per team, and get evenly balanced teams.</p>
 
   <section class="card">
     <h2>1. Players</h2>
@@ -97,8 +111,8 @@
       <button id="clearBtn" class="danger">Clear all</button>
     </div>
     <details style="margin-top:12px">
-      <summary>Bulk paste (name, speed, passing, shooting, defense, stamina, position)</summary>
-      <textarea id="bulkText" placeholder="John, 7, 6, 8, 4, 7, FW&#10;Mike, 5, 7, 5, 8, 6, DF"></textarea>
+      <summary>Bulk paste (name, speed, passing, shooting, defense, stamina, position — skills 1–5)</summary>
+      <textarea id="bulkText" placeholder="John, 4, 3, 5, 2, 4, FW&#10;Mike, 3, 4, 3, 5, 3, DF"></textarea>
       <div class="row" style="margin-top:8px">
         <button id="bulkAddBtn">Add to list</button>
       </div>
@@ -130,23 +144,26 @@
 const SKILLS = ["Speed", "Passing", "Shooting", "Defense", "Stamina"];
 const POSITIONS = ["", "GK", "DF", "MF", "FW"];
 const STORE_KEY = "soccerTeamMgr.v1";
+const MAX = 5;   // skills are rated 1–5 stars
 
 let players = [];   // {name, skills:[5], pos, on:true}
 let lastResult = null;
 
 const $ = (id) => document.getElementById(id);
-const clamp = (v) => Math.max(1, Math.min(10, Math.round(Number(v) || 5)));
+const clamp = (v) => Math.max(1, Math.min(MAX, Math.round(Number(v) || 3)));
 const ovr = (p) => p.skills.reduce((a, b) => a + b, 0) / SKILLS.length;
 
 /* ---------- Save / load ---------- */
 function save() {
-  const data = { players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
+  const data = { scale: MAX, players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
   try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (e) {}
 }
 function applyData(data) {
   if (!data) return;
+  // Older saves used a 1–10 scale; convert them to 1–5 stars
+  const old = data.scale !== MAX && (data.players || []).some(p => (p.skills || []).some(v => v > MAX));
   players = (data.players || []).map(p => ({
-    name: String(p.name || ""), skills: SKILLS.map((_, i) => clamp(p.skills?.[i])),
+    name: String(p.name || ""), skills: SKILLS.map((_, i) => clamp(old ? (p.skills?.[i] || 6) / 2 : p.skills?.[i])),
     pos: POSITIONS.includes(p.pos) ? p.pos : "", on: p.on !== false,
   }));
   if (data.teamCount) $("teamCount").value = data.teamCount;
@@ -163,7 +180,7 @@ function load() {
 
 /* ---------- Player cards ---------- */
 const ABBR = ["SPD", "PAS", "SHO", "DEF", "STA"];
-const rating = (p) => Math.round(ovr(p) * 10);          // 1–10 average shown as 10–100
+const rating = (p) => Math.round(ovr(p) * 20);          // 1–5 star average shown as 20–100
 const tier = (r) => r >= 85 ? "elite" : r >= 70 ? "gold" : r >= 55 ? "silver" : "bronze";
 const initials = (name) => (name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
 
@@ -188,8 +205,9 @@ function renderPlayers() {
       `<input type="text" class="pc-name" data-k="name" placeholder="Player name" maxlength="24">` +
       `<div class="pc-stats">` +
         p.skills.map((v, i) =>
-          `<label class="pc-stat" title="${SKILLS[i]}"><b>${v}</b><span>${ABBR[i]}</span>` +
-          `<input type="range" min="1" max="10" step="1" value="${v}" data-k="s${i}"></label>`).join("") +
+          `<div class="pc-stat" title="${SKILLS[i]}"><span>${ABBR[i]}</span><div class="stars">` +
+          [1, 2, 3, 4, 5].map(n => `<button type="button" class="star${n <= v ? " on" : ""}" data-skill="${i}" data-n="${n}" aria-label="${SKILLS[i]} ${n}">★</button>`).join("") +
+          `</div></div>`).join("") +
       `</div>` +
       `<label class="pc-in"><input type="checkbox" data-k="on" ${p.on ? "checked" : ""}> Playing today</label>`;
     card.querySelector('[data-k="name"]').value = p.name;
@@ -199,19 +217,24 @@ function renderPlayers() {
       if (k === "name") p.name = e.target.value;
       else if (k === "on") p.on = e.target.checked;
       else if (k === "pos") p.pos = e.target.value;
-      else if (k && k[0] === "s") {
-        p.skills[+k.slice(1)] = clamp(e.target.value);
-        e.target.parentElement.querySelector("b").textContent = p.skills[+k.slice(1)];
-      }
       refreshCard(card, p);
       save(); updateCountMsg();
+    });
+    card.addEventListener("click", (e) => {
+      const star = e.target.closest(".star");
+      if (!star) return;
+      const i = +star.dataset.skill, n = +star.dataset.n;
+      p.skills[i] = n;
+      star.parentElement.querySelectorAll(".star").forEach(s => s.classList.toggle("on", +s.dataset.n <= n));
+      refreshCard(card, p);
+      save();
     });
     card.querySelector('[data-k="del"]').onclick = () => { players.splice(idx, 1); renderPlayers(); save(); };
     body.appendChild(card);
   });
   updateCountMsg();
 }
-function addPlayer(name = "", skills = [5, 5, 5, 5, 5], pos = "") {
+function addPlayer(name = "", skills = [3, 3, 3, 3, 3], pos = "") {
   players.push({ name, skills: skills.map(clamp), pos, on: true });
 }
 
@@ -236,8 +259,9 @@ function cost(teams) {
   const sum = (arr, f) => arr.reduce((a, p) => a + f(p), 0);
   const variance = (vals) => { const m = vals.reduce((a, b) => a + b, 0) / vals.length; return vals.reduce((a, v) => a + (v - m) ** 2, 0) / vals.length; };
   // Team sizes may differ, so compare per-player averages
-  let c = variance(teams.map(t => sum(t, ovr) / t.length)) * 10;
-  for (let i = 0; i < SKILLS.length; i++) c += variance(teams.map(t => sum(t, p => p.skills[i]) / t.length)) * 2;
+  // (×4 keeps weights the same as the old 1–10 scale relative to the position term)
+  let c = variance(teams.map(t => sum(t, ovr) / t.length)) * 40;
+  for (let i = 0; i < SKILLS.length; i++) c += variance(teams.map(t => sum(t, p => p.skills[i]) / t.length)) * 8;
   for (const pos of ["GK", "DF", "MF", "FW"]) c += variance(teams.map(t => t.filter(p => p.pos === pos).length)) * (pos === "GK" ? 8 : 1.5);
   return c;
 }
@@ -289,7 +313,7 @@ function renderResult(S) {
     const skillAvg = SKILLS.map((s, k) => `${s} ${(t.reduce((a, p) => a + p.skills[k], 0) / t.length).toFixed(1)}`).join(" · ");
     const div = document.createElement("div");
     div.className = "team";
-    div.innerHTML = `<h3><span>Team ${i + 1}</span><span>Avg OVR ${(avg * 10).toFixed(1)}</span></h3><ul></ul><div class="stats">${skillAvg}</div>`;
+    div.innerHTML = `<h3><span>Team ${i + 1}</span><span>Avg OVR ${(avg * 20).toFixed(1)}</span></h3><ul></ul><div class="stats">${skillAvg}</div>`;
     const ul = div.querySelector("ul");
     t.forEach((p, idx) => {
       const li = document.createElement("li");
@@ -313,7 +337,7 @@ $("clearBtn").onclick = () => { if (confirm("Remove all players?")) { players = 
 $("sampleBtn").onclick = () => {
   const names = ["Alex","Ben","Chris","Dan","Eli","Finn","Gabe","Henry","Ian","Jack"];
   const pos = ["GK","DF","DF","MF","MF","FW","GK","DF","MF","FW"];
-  names.forEach((n, i) => addPlayer(n, SKILLS.map(() => 3 + Math.floor(Math.random() * 7)), pos[i]));
+  names.forEach((n, i) => addPlayer(n, SKILLS.map(() => 1 + Math.floor(Math.random() * 5)), pos[i]));
   renderPlayers(); save();
 };
 $("bulkAddBtn").onclick = () => {
@@ -330,7 +354,7 @@ $("teamCount").oninput = $("teamSize").oninput = () => { save(); updateCountMsg(
 $("makeBtn").onclick = run;
 $("reshuffleBtn").onclick = run;
 $("shareBtn").onclick = async () => {
-  const data = { players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
+  const data = { scale: MAX, players, teamCount: $("teamCount").value, teamSize: $("teamSize").value };
   const url = location.href.split("#")[0] + "#d=" + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   history.replaceState(null, "", url);
   try { await navigator.clipboard.writeText(url); setMsg("Share link copied to clipboard."); }

@@ -5,7 +5,7 @@ A web page that splits players into evenly balanced soccer teams based on their 
 **Live:** https://chococula.github.io/soccerTeamMgr/
 
 ## Input
-- **Five skills per player** (1–10): Speed, Passing, Shooting, Defense, Stamina
+- **Player cards**: one card per player with five skills rated 1–5 stars (Speed, Passing, Shooting, Defense, Stamina). The card shows an OVR (20–100), and its color changes with the rating: bronze, silver, gold, or elite. On phones the cards stack one per row with large stars that are easy to tap.
 - **Position** (optional): GK / DF / MF / FW. Positions are spread across teams, so the goalkeepers don't all end up on one team.
 - **Number of teams** and **players per team**
 
