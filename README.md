@@ -22,7 +22,7 @@ If more players are checked in than `teams × players per team`, the extras are 
 The roster is saved only in the browser on your device (localStorage). There is no share link, the page ignores roster data in URLs, and nothing is sent to any server. Other people opening the same URL see an empty roster.
 
 ## Importing players from JSON
-**More ▾ → Import players from JSON file.** If a player's name is already on the list, that player is updated. New names are added. The result is saved on the device.
+Tap **Import JSON** next to the player count. If a player's name is already on the list, that player is updated. New names are added. The result is saved on the device.
 
 ```json
 [

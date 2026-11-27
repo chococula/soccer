@@ -40,15 +40,6 @@
   .pill { font-size: 13px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
   .pill b { color: var(--text); }
 
-  details.more { position: relative; }
-  details.more summary { list-style: none; cursor: pointer; border: 1px solid var(--line); background: var(--card);
-    border-radius: 10px; padding: 8px 14px; }
-  details.more summary::-webkit-details-marker { display: none; }
-  .menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: min(340px, calc(100vw - 32px));
-    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.18); display: flex; flex-direction: column; gap: 8px; }
-  .menu textarea { width: 100%; min-height: 90px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
-  .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
 
   /* ---------- Player cards ---------- */
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
@@ -156,10 +147,6 @@
     .star { font-size: 30px; padding: 0 4px; }   /* big tap targets */
     .addcard { min-height: 110px; }
     .actionbar .status { font-size: 13px; }
-    /* Menu is anchored to the screen, not the button, so it never runs off the left edge */
-    .menu { position: fixed; left: 16px; right: 16px; top: 16px; width: auto;
-      max-height: calc(100vh - 120px); overflow-y: auto; z-index: 30; }
-    details.more[open] summary::before { content: ""; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 25; }
   }
 </style>
 </head>
@@ -176,26 +163,12 @@
     <div class="sec-head">
       <div>
         <h2><span class="step">1</span> Players</h2>
-        <p class="hint">Tap the stars to rate each skill. Switch off anyone who isn't playing today.</p>
+        <p class="hint">Tap the stars to rate each skill. Switch off anyone who isn't playing today. 🔒 Saved only on this device.</p>
       </div>
       <div class="toolbar">
         <span class="pill" id="countPill"></span>
-        <details class="more" id="moreMenu">
-          <summary>More ▾</summary>
-          <div class="menu">
-            <button id="allOnBtn">Everyone is playing</button>
-            <button id="jsonBtn">Import players from JSON file</button>
-            <input type="file" id="jsonFile" accept=".json,application/json" hidden>
-            <p class="hint" style="margin:0">🔒 Players are saved only on this device. There's no share link, and nothing is sent anywhere.</p>
-            <button id="sampleBtn">Add sample players</button>
-            <hr>
-            <label class="hint" for="bulkText">Paste many players, one per line:<br><code>Name, Speed, Passing, Shooting, Defense, Stamina, Position</code></label>
-            <textarea id="bulkText" placeholder="John, 4, 3, 5, 2, 4, FW&#10;Mike, 3, 4, 3, 5, 3, DF"></textarea>
-            <button id="bulkAddBtn">Add pasted players</button>
-            <hr>
-            <button id="clearBtn" class="danger">Remove all players</button>
-          </div>
-        </details>
+        <button id="jsonBtn">Import JSON</button>
+        <input type="file" id="jsonFile" accept=".json,application/json" hidden>
       </div>
     </div>
     <div class="cards" id="playerBody"></div>
@@ -378,7 +351,7 @@ function renderPlayers(focusLast = false) {
   add.onclick = () => { players.push({ name: "", skills: [3, 3, 3, 3, 3], pos: "", on: true }); renderPlayers(true); save(); };
   body.appendChild(add);
 
-  if (!players.length) body.insertAdjacentHTML("beforeend", `<p class="empty">No players yet. Tap <b>Add player</b>, or use <b>More ▾</b> to paste a list or try sample players.</p>`);
+  if (!players.length) body.insertAdjacentHTML("beforeend", `<p class="empty">No players yet. Tap <b>Add player</b>, or <b>Import JSON</b> to load a list.</p>`);
 
   if (focusLast) {
     const inputs = body.querySelectorAll(".pc-name");
@@ -487,26 +460,6 @@ function renderResult(S) {
 }
 
 /* ---------- Buttons ---------- */
-const closeMenu = () => $("moreMenu").removeAttribute("open");
-$("allOnBtn").onclick = () => { players.forEach(p => p.on = true); renderPlayers(); save(); closeMenu(); };
-$("clearBtn").onclick = () => { if (players.length && confirm("Remove all players?")) { players = []; renderPlayers(); save(); } closeMenu(); };
-$("sampleBtn").onclick = () => {
-  const names = ["Alex","Ben","Chris","Dan","Eli","Finn","Gabe","Henry","Ian","Jack"];
-  const pos = ["GK","DF","DF","MF","MF","FW","GK","DF","MF","FW"];
-  names.forEach((n, i) => players.push({ name: n, skills: SKILLS.map(() => 1 + Math.floor(Math.random() * 5)), pos: pos[i], on: true }));
-  renderPlayers(); save(); closeMenu();
-};
-$("bulkAddBtn").onclick = () => {
-  const lines = $("bulkText").value.split("\n").map(l => l.trim()).filter(Boolean);
-  lines.forEach(l => {
-    const parts = l.split(/[,\t]/).map(s => s.trim());
-    const pos = POSITIONS.includes((parts[6] || "").toUpperCase()) ? parts[6].toUpperCase() : "";
-    players.push({ name: parts[0], skills: SKILLS.map((_, i) => clamp(parts[i + 1])), pos, on: true });
-  });
-  $("bulkText").value = "";
-  renderPlayers(); save(); closeMenu();
-};
-document.addEventListener("click", (e) => { if (!e.target.closest("#moreMenu")) closeMenu(); });
 $("makeBtn").onclick = run;
 $("reshuffleBtn").onclick = run;
 $("jsonBtn").onclick = () => $("jsonFile").click();
@@ -516,7 +469,7 @@ $("jsonFile").onchange = async (e) => {
   if (!file) return;
   try {
     const { added, updated } = importJSON(await file.text());
-    renderPlayers(); save(); closeMenu();
+    renderPlayers(); save();
     alert(`Saved on this device: ${added} added, ${updated} updated.`);
   } catch (err) { alert("Couldn't read that JSON file: " + err.message); }
 };
