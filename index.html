@@ -167,6 +167,7 @@
       </div>
       <div class="toolbar">
         <span class="pill" id="countPill"></span>
+        <button id="saveJsonBtn">Save JSON</button>
         <button id="jsonBtn">Import JSON</button>
         <input type="file" id="jsonFile" accept=".json,application/json" hidden>
       </div>
@@ -462,6 +463,17 @@ function renderResult(S) {
 /* ---------- Buttons ---------- */
 $("makeBtn").onclick = run;
 $("reshuffleBtn").onclick = run;
+// Download the roster as a JSON file to this device (same format Import JSON reads)
+$("saveJsonBtn").onclick = () => {
+  const list = players.filter(p => p.name.trim()).map(p => ({ name: p.name.trim(), pos: p.pos, skills: p.skills, on: p.on }));
+  if (!list.length) return alert("There are no named players to save yet.");
+  const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `soccer-players-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
 $("jsonBtn").onclick = () => $("jsonFile").click();
 $("jsonFile").onchange = async (e) => {
   const file = e.target.files[0];
