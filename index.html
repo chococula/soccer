@@ -33,12 +33,43 @@
   button { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
   button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
   button.danger { color: var(--err); }
-  .table-wrap { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; min-width: 640px; }
-  th, td { padding: 6px 4px; border-bottom: 1px solid var(--line); text-align: center; }
-  th { font-size: 12px; color: var(--muted); font-weight: 600; }
-  td.name input { width: 120px; }
-  td.ovr { font-weight: 600; font-variant-numeric: tabular-nums; }
+  /* ---------- Player cards ---------- */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+  .pcard {
+    --c1: #c98a4b; --c2: #8a5428; --ink: #2a1708; --chip: rgba(255,255,255,.35);
+    position: relative; color: var(--ink); border-radius: 18px 18px 26px 26px; padding: 12px 14px 14px;
+    background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.55), transparent 60%),
+                linear-gradient(160deg, var(--c1), var(--c2));
+    box-shadow: 0 6px 18px rgba(0,0,0,.18), inset 0 0 0 2px rgba(255,255,255,.35);
+    transition: transform .15s, opacity .15s, filter .15s;
+  }
+  .pcard:hover { transform: translateY(-2px); }
+  .pcard.silver { --c1: #e4e8ec; --c2: #9aa4ae; --ink: #1d242b; }
+  .pcard.gold   { --c1: #f7dd7a; --c2: #c79a1e; --ink: #2b2104; }
+  .pcard.elite  { --c1: #4b4f7a; --c2: #15162e; --ink: #f4e7b0; --chip: rgba(255,255,255,.14); }
+  .pcard.off { opacity: .45; filter: grayscale(.8); }
+  .pc-top { display: flex; align-items: flex-start; gap: 8px; }
+  .pc-ovr { font-size: 34px; font-weight: 800; line-height: 1; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .pc-ovr small { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1px; opacity: .7; }
+  .pc-pos { margin-top: 2px; background: var(--chip); color: inherit; border: 0; border-radius: 6px;
+    padding: 2px 4px; font-weight: 700; font-size: 13px; }
+  .pc-pos option { color: #111; }
+  .pc-del { margin-left: auto; background: transparent; border: 0; color: inherit; opacity: .6; padding: 2px 4px; font-size: 14px; }
+  .pc-del:hover { opacity: 1; }
+  .pc-avatar { width: 58px; height: 58px; margin: 2px auto 6px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--chip); font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+  .pc-name { width: 100%; text-align: center; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: .5px;
+    background: transparent !important; border: 0 !important; border-bottom: 2px solid rgba(0,0,0,.2) !important;
+    border-radius: 0 !important; color: inherit; padding: 2px 0 4px !important; }
+  .pc-name::placeholder { color: inherit; opacity: .45; }
+  .pc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-top: 10px; }
+  .pc-stat { display: grid; grid-template-columns: 22px 34px 1fr; align-items: center; gap: 4px; font-size: 12px; }
+  .pc-stat:last-child { grid-column: 1 / -1; grid-template-columns: 22px 34px 1fr; }
+  .pc-stat b { font-size: 15px; text-align: right; font-variant-numeric: tabular-nums; }
+  .pc-stat span { font-weight: 700; opacity: .75; }
+  .pc-stat input[type=range] { width: 100%; accent-color: var(--ink); margin: 0; }
+  .pc-in { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .pc-in input { accent-color: var(--ink); }
   .msg { margin-top: 10px; font-size: 14px; }
   .msg.warn { color: var(--warn); } .msg.err { color: var(--err); }
   .teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
@@ -59,12 +90,7 @@
 
   <section class="card">
     <h2>1. Players</h2>
-    <div class="table-wrap">
-      <table>
-        <thead><tr id="headRow"></tr></thead>
-        <tbody id="playerBody"></tbody>
-      </table>
-    </div>
+    <div class="cards" id="playerBody"></div>
     <div class="row" style="margin-top:12px">
       <button id="addBtn">+ Add player</button>
       <button id="sampleBtn">Sample data</button>
@@ -135,36 +161,53 @@ function load() {
   try { applyData(JSON.parse(localStorage.getItem(STORE_KEY))); } catch (e) {}
 }
 
-/* ---------- Player table ---------- */
-function renderHead() {
-  $("headRow").innerHTML =
-    "<th>In</th><th>Name</th>" + SKILLS.map(s => `<th>${s}</th>`).join("") +
-    "<th>Position</th><th>Avg</th><th></th>";
+/* ---------- Player cards ---------- */
+const ABBR = ["SPD", "PAS", "SHO", "DEF", "STA"];
+const rating = (p) => Math.round(ovr(p) * 10);          // 1–10 average shown as 10–100
+const tier = (r) => r >= 85 ? "elite" : r >= 70 ? "gold" : r >= 55 ? "silver" : "bronze";
+const initials = (name) => (name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2) || "?").toUpperCase();
+
+function refreshCard(card, p) {
+  const r = rating(p);
+  card.className = `pcard ${tier(r)}${p.on ? "" : " off"}`;
+  card.querySelector(".pc-ovr b").textContent = r;
+  card.querySelector(".pc-avatar").textContent = initials(p.name);
 }
 function renderPlayers() {
   const body = $("playerBody");
   body.innerHTML = "";
   players.forEach((p, idx) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML =
-      `<td><input type="checkbox" data-k="on" ${p.on ? "checked" : ""}></td>` +
-      `<td class="name"><input type="text" data-k="name" placeholder="Name"></td>` +
-      p.skills.map((v, i) => `<td><input type="number" min="1" max="10" data-k="s${i}" value="${v}"></td>`).join("") +
-      `<td><select data-k="pos">${POSITIONS.map(x => `<option value="${x}" ${x === p.pos ? "selected" : ""}>${x || "-"}</option>`).join("")}</select></td>` +
-      `<td class="ovr">${ovr(p).toFixed(1)}</td>` +
-      `<td><button class="danger" data-k="del" title="Remove">✕</button></td>`;
-    tr.querySelector('[data-k="name"]').value = p.name;
-    tr.addEventListener("input", (e) => {
+    const card = document.createElement("div");
+    card.innerHTML =
+      `<div class="pc-top">` +
+        `<div class="pc-ovr"><b></b><small>OVR</small></div>` +
+        `<select class="pc-pos" data-k="pos" title="Position">${POSITIONS.map(x => `<option value="${x}" ${x === p.pos ? "selected" : ""}>${x || "POS"}</option>`).join("")}</select>` +
+        `<button class="pc-del" data-k="del" title="Remove">✕</button>` +
+      `</div>` +
+      `<div class="pc-avatar"></div>` +
+      `<input type="text" class="pc-name" data-k="name" placeholder="Player name" maxlength="24">` +
+      `<div class="pc-stats">` +
+        p.skills.map((v, i) =>
+          `<label class="pc-stat" title="${SKILLS[i]}"><b>${v}</b><span>${ABBR[i]}</span>` +
+          `<input type="range" min="1" max="10" step="1" value="${v}" data-k="s${i}"></label>`).join("") +
+      `</div>` +
+      `<label class="pc-in"><input type="checkbox" data-k="on" ${p.on ? "checked" : ""}> Playing today</label>`;
+    card.querySelector('[data-k="name"]').value = p.name;
+    refreshCard(card, p);
+    card.addEventListener("input", (e) => {
       const k = e.target.dataset.k;
       if (k === "name") p.name = e.target.value;
       else if (k === "on") p.on = e.target.checked;
       else if (k === "pos") p.pos = e.target.value;
-      else if (k && k[0] === "s") p.skills[+k.slice(1)] = clamp(e.target.value);
-      tr.querySelector(".ovr").textContent = ovr(p).toFixed(1);
+      else if (k && k[0] === "s") {
+        p.skills[+k.slice(1)] = clamp(e.target.value);
+        e.target.parentElement.querySelector("b").textContent = p.skills[+k.slice(1)];
+      }
+      refreshCard(card, p);
       save(); updateCountMsg();
     });
-    tr.querySelector('[data-k="del"]').onclick = () => { players.splice(idx, 1); renderPlayers(); save(); };
-    body.appendChild(tr);
+    card.querySelector('[data-k="del"]').onclick = () => { players.splice(idx, 1); renderPlayers(); save(); };
+    body.appendChild(card);
   });
   updateCountMsg();
 }
@@ -246,7 +289,7 @@ function renderResult(S) {
     const skillAvg = SKILLS.map((s, k) => `${s} ${(t.reduce((a, p) => a + p.skills[k], 0) / t.length).toFixed(1)}`).join(" · ");
     const div = document.createElement("div");
     div.className = "team";
-    div.innerHTML = `<h3><span>Team ${i + 1}</span><span>Avg ${avg.toFixed(2)}</span></h3><ul></ul><div class="stats">${skillAvg}</div>`;
+    div.innerHTML = `<h3><span>Team ${i + 1}</span><span>Avg OVR ${(avg * 10).toFixed(1)}</span></h3><ul></ul><div class="stats">${skillAvg}</div>`;
     const ul = div.querySelector("ul");
     t.forEach((p, idx) => {
       const li = document.createElement("li");
@@ -255,7 +298,7 @@ function renderResult(S) {
       if (p.pos) left.insertAdjacentHTML("beforeend", `<span class="tag">${p.pos}</span>`);
       if (idx >= S) left.insertAdjacentHTML("beforeend", `<span class="tag">Sub</span>`);
       li.appendChild(left);
-      li.insertAdjacentHTML("beforeend", `<span>${ovr(p).toFixed(1)}</span>`);
+      li.insertAdjacentHTML("beforeend", `<span>${rating(p)}</span>`);
       ul.appendChild(li);
     });
     box.appendChild(div);
@@ -301,7 +344,6 @@ $("copyBtn").onclick = async () => {
   catch (e) { prompt("Result:", text); }
 };
 
-renderHead();
 load();
 renderPlayers();
 </script>
