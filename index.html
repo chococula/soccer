@@ -204,7 +204,7 @@ function renderPlayers() {
       `<input type="text" class="pc-name" data-k="name" placeholder="Player name" maxlength="24">` +
       `<div class="pc-stats">` +
         p.skills.map((v, i) =>
-          `<div class="pc-stat" title="${SKILLS[i]}"><span>${ABBR[i]}</span><div class="stars">` +
+          `<div class="pc-stat"><span>${SKILLS[i]}</span><div class="stars">` +
           [1, 2, 3, 4, 5].map(n => `<button type="button" class="star${n <= v ? " on" : ""}" data-skill="${i}" data-n="${n}" aria-label="${SKILLS[i]} ${n}">★</button>`).join("") +
           `</div></div>`).join("") +
       `</div>` +
