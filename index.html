@@ -39,6 +39,7 @@
   .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   .pill { font-size: 13px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
   .pill b { color: var(--text); }
+  .privacy { margin: 0 0 14px; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); font-size: 13px; line-height: 1.45; }
 
 
   /* ---------- Player cards ---------- */
@@ -163,7 +164,7 @@
     <div class="sec-head">
       <div>
         <h2><span class="step">1</span> Players</h2>
-        <p class="hint">Tap the stars to rate each skill. Switch off anyone who isn't playing today. 🔒 Saved only on this device.</p>
+        <p class="hint">Tap the stars to rate each skill. Switch off anyone who isn't playing today.</p>
       </div>
       <div class="toolbar">
         <span class="pill" id="countPill"></span>
@@ -172,6 +173,7 @@
         <input type="file" id="jsonFile" accept=".json,application/json" hidden>
       </div>
     </div>
+    <p class="privacy">🔒 <b>Your players stay on this phone.</b> Save JSON and Import JSON work only on this device. Nothing is uploaded or sent anywhere, and nobody else can see your list.</p>
     <div class="cards" id="playerBody"></div>
   </section>
 
@@ -256,6 +258,10 @@ function load() {
   // so nobody can push a roster onto this phone or pull one out of it via a URL.
   if (location.hash) history.replaceState(null, "", location.pathname + location.search);
   try { applyData(JSON.parse(localStorage.getItem(STORE_KEY))); } catch (e) {}
+  // One-time cleanup: drop the 10 sample players an earlier version could add,
+  // but only when all 10 are present together (so real players are never touched)
+  const SAMPLE = ["Alex","Ben","Chris","Dan","Eli","Finn","Gabe","Henry","Ian","Jack"];
+  if (SAMPLE.every(n => players.some(p => p.name === n))) { players = players.filter(p => !SAMPLE.includes(p.name)); save(); }
   // Ask the browser not to evict this site's storage when space runs low
   try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
 }
@@ -473,6 +479,7 @@ $("saveJsonBtn").onclick = () => {
   a.download = `soccer-players-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  setTimeout(() => alert(`🔒 Saved ${list.length} players to a file on this phone (${a.download}).\nThe file stays on this device. Nothing was uploaded.`), 300);
 };
 $("jsonBtn").onclick = () => $("jsonFile").click();
 $("jsonFile").onchange = async (e) => {
@@ -482,7 +489,7 @@ $("jsonFile").onchange = async (e) => {
   try {
     const { added, updated } = importJSON(await file.text());
     renderPlayers(); save();
-    alert(`Saved on this device: ${added} added, ${updated} updated.`);
+    alert(`🔒 Loaded on this phone only: ${added} added, ${updated} updated.\nNothing was uploaded or shared.`);
   } catch (err) { alert("Couldn't read that JSON file: " + err.message); }
 };
 $("copyBtn").onclick = async () => {
