@@ -1,8 +1,8 @@
-# ⚽ soccerTeamMgr
+# ⚽ soccer
 
 A web page that splits players into evenly balanced soccer teams based on their skill ratings. Everything runs in a single `index.html` with no server.
 
-**Live:** https://chococula.github.io/soccerTeamMgr/
+**Live:** https://chococula.github.io/soccer/
 
 ## Input
 - **Player cards**: one card per player with five skills rated 1–5 stars (Speed, Passing, Shooting, Defense, Stamina), each labeled with its full name. The card shows an OVR (20–100), and its color changes with the rating: bronze, silver, gold, or elite. On phones the cards stack one per row with large stars that are easy to tap.
